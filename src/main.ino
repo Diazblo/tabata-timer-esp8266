@@ -65,9 +65,39 @@ byte phaseColor(TimerPhase t_phase){
     return 0;
 }
 
+struct displayFlag
+{
+    String messages[10];
+    String lastMessage;
+    uint8_t infoCounter;
+    unsigned long infoMillis;
+}screen;
+
 void display_main(TimerCurrent t_timer ){
-    display_time(t_timer.countTime-t_timer.elapsed);
-    display_bar(t_timer.countTime-t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
+    if(screen.infoCounter){
+        display_text(screen.messages[screen.infoCounter-1]);
+        if(millis()-screen.infoMillis > 1000)
+        {
+            screen.infoCounter--;  
+            screen.infoMillis = millis(); 
+        }
+    }
+    else
+    {
+        display_time(t_timer.countTime-t_timer.elapsed);
+        display_bar(t_timer.countTime-t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
+        displayInfoAdd(tabata.phase);
+    }
+}
+
+void displayInfoAdd(String t_message){
+    if(!(t_message == screen.lastMessage)){
+        screen.lastMessage = t_message;
+        screen.messages[screen.infoCounter++] = t_message;
+        screen.infoMillis = millis();
+        if (screen.infoCounter==ARR_SIZE(screen.messages))
+            screen.infoCounter=0;
+    }
 }
 
 void interactorMenu()
@@ -105,6 +135,8 @@ void interactorMenu()
 
         if (interactorAction == LONGPRESS)
         {
+            sequenceStop();
+            stopTimer();
             startTimer({variable, 0, 0, 0, 0, 0});
             menuState = HOME;
         }
@@ -180,6 +212,9 @@ void serialLoop()
             break;
         case '6':
             interactorAction = LONGLONGPRESS;
+            break;
+        case 't':
+            displayInfoAdd("HIII");
             break;
         }
         Serial.flush();
