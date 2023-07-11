@@ -3,17 +3,25 @@
 #include "preprocessor_helper.h"
 #include "interactor.h"
 #include "display.h"
+#include <EEPROM.h>
 
 int16_t variable = 0;
 int16_t variable_pos = 0;
 bool variable_flag = 1;
-
 
 enum MenuState
 {
     HOME,
     SETANDSTART
 } menuState;
+
+struct displayFlag
+{
+    String messages[10];
+    String lastMessage[10];
+    uint8_t infoCounter;
+    unsigned long infoMillis;
+} screen;
 
 InteractorAction interactorAction;
 
@@ -24,6 +32,13 @@ InteractorAction interactorAction;
                 JSON_FIELD_INT("C", tabata.cycle) \
                     JSON_FIELD_INT_("I", tabata.preset) "}"
 
+#define TIMER_SETTINGS(TIMER_STRUCT)                        \
+    "{" _JSON_FIELD_INT(TIMER_STRUCT, initialCountdown)     \
+        _JSON_FIELD_INT(TIMER_STRUCT, workTime)             \
+            _JSON_FIELD_INT(TIMER_STRUCT, restTime)         \
+                _JSON_FIELD_INT(TIMER_STRUCT, recoveryTime) \
+                    _JSON_FIELD_INT_(TIMER_STRUCT, sets)    \
+                        _JSON_FIELD_INT_(TIMER_STRUCT, cycles) "}"
 
 void setup()
 {
@@ -31,10 +46,12 @@ void setup()
     tabata_init();
     display_init();
     interactor_init();
+    loadEeprom();
 }
 void loop()
-{   
-    INTERVAL_TIMER(50){
+{
+    INTERVAL_TIMER(50)
+    {
         interactor_loop();
     }
     INTERVAL_TIMER(100)
@@ -46,57 +63,56 @@ void loop()
     tabata_loop();
 }
 
-byte phaseColor(TimerPhase t_phase){
+byte phaseColor(TimerPhase t_phase)
+{
     switch (t_phase)
     {
-        case COUNTDOWN:
-            return BAR_WHITE;
-            break;
-        case WORK:
-            return BAR_GREEN;
-            break;
-        case REST:
-            return BAR_YELLOW;
-            break;
-        case RECOVERY:
-            return BAR_RED;
-            break;   
+    case COUNTDOWN:
+        return BAR_WHITE;
+        break;
+    case BEGIN:
+        return BAR_GREEN;
+        break;
+    case REST:
+        return BAR_YELLOW;
+        break;
+    case RECOVERY:
+        return BAR_RED;
+        break;
     }
     return 0;
 }
 
-struct displayFlag
+void display_main(TimerCurrent t_timer)
 {
-    String messages[10];
-    String lastMessage;
-    uint8_t infoCounter;
-    unsigned long infoMillis;
-}screen;
-
-void display_main(TimerCurrent t_timer ){
-    if(screen.infoCounter){
-        display_text(screen.messages[screen.infoCounter-1]);
-        if(millis()-screen.infoMillis > 1000)
+    if (screen.infoCounter)
+    {
+        display_text(screen.messages[screen.infoCounter - 1]);
+        if (millis() - screen.infoMillis > 1000)
         {
-            screen.infoCounter--;  
-            screen.infoMillis = millis(); 
+            screen.infoCounter--;
+            screen.infoMillis = millis();
         }
     }
     else
     {
-        display_time(t_timer.countTime-t_timer.elapsed);
-        display_bar(t_timer.countTime-t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
-        displayInfoAdd(tabata.phase);
+        display_time(t_timer.countTime - t_timer.elapsed);
+        display_bar(t_timer.countTime - t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
+        displayInfoAdd(tabata.phase,0);
+        displayInfoAdd("Pre" + String(tabata.preset),1);
     }
 }
 
-void displayInfoAdd(String t_message){
-    if(!(t_message == screen.lastMessage)){
-        screen.lastMessage = t_message;
+void displayInfoAdd(String t_message, uint8_t t_index)
+{
+    if (!(t_message == screen.lastMessage[t_index]))
+    {
+        beep(1);
+        screen.lastMessage[t_index] = t_message;
         screen.messages[screen.infoCounter++] = t_message;
         screen.infoMillis = millis();
-        if (screen.infoCounter==ARR_SIZE(screen.messages))
-            screen.infoCounter=0;
+        if (screen.infoCounter == ARR_SIZE(screen.messages))
+            screen.infoCounter = 0;
     }
 }
 
@@ -143,7 +159,7 @@ void interactorMenu()
 
         interactorOutput = {String(variable), variable_pos};
         display_seconds(variable);
-        display_bar(variable_pos+1, B111, true);
+        display_bar(variable_pos + 1, B111, true);
         break;
     }
 
@@ -152,6 +168,27 @@ void interactorMenu()
 
     Serial.println(String(interactorOutput.position) + ":" + interactorOutput.buffer);
     // return output_buffer;
+}
+
+void assignEeprom(TimerSettings t_timer, uint8_t t_index){
+    timerEeprom.timers[t_index] = t_timer;
+    timerEeprom.preset = t_index;
+
+    Serial.println(TIMER_SETTINGS(timerEeprom.timers[timerEeprom.preset]));
+}
+void updateEeprom()
+{
+    EEPROM.begin(sizeof(timerEeprom));
+    EEPROM.put(0, timerEeprom);
+    EEPROM.commit();
+    EEPROM.end();
+}
+void loadEeprom()
+{
+    EEPROM.begin(sizeof(timerEeprom));
+    EEPROM.get(0, timerEeprom);
+    EEPROM.end();
+    Serial.println(TIMER_SETTINGS(timerEeprom.timers[timerEeprom.preset]));
 }
 
 // Function to simulate parts of code through serial
@@ -164,7 +201,7 @@ void serialLoop()
         {
             //
         case 's':
-            startTimer({4, 5, 5, 8, 3, 3});
+            startTimer();
             break;
         case 'S':
             sequenceStart();
@@ -179,15 +216,19 @@ void serialLoop()
             sequenceNext();
             break;
         case 'e':
-            timerEeprom.timers[0] = {5, 5, 5, 5, 2, 2};
-            timerEeprom.timers[1] = {5, 5, 5, 5, 2, 2};
-            timerEeprom.timers[2] = {5, 5, 5, 5, 2, 2};
-            timerEeprom.timers[3] = {5, 5, 5, 5, 2, 2};
-            timerEeprom.timers[4] = {5, 5, 5, 5, 2, 2};
-            timerEeprom.timers[5] = {5, 5, 5, 5, 2, 2};
+            Serial.println(TIMER_SETTINGS(timerEeprom.timers[1]));
             ASSIGN_ARR(timerEeprom.warmUpSequence, "1,2,1");
             ASSIGN_ARR(timerEeprom.basicSequence, "4,5");
             ASSIGN_ARR(timerEeprom.regularSequence, "3");
+            timerEeprom.preset = 1;
+            for (uint8_t i = 1; i < 10; i++)
+            {
+                if (i == 2)
+                    assignEeprom({10, 10, 10, 20, 2, 2}, i);
+                else
+                    assignEeprom({4, 1, 1, 1, 1, 1}, i);
+            }
+            updateEeprom();
             break;
         case 'q':
             startTimer({10, 0, 0, 0, 0, 0});
@@ -214,7 +255,7 @@ void serialLoop()
             interactorAction = LONGLONGPRESS;
             break;
         case 't':
-            displayInfoAdd("HIII");
+            displayInfoAdd("HIII",0);
             break;
         }
         Serial.flush();

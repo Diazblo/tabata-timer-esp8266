@@ -50,10 +50,20 @@ void pauseTimer()
         tabata.timerPaused = false;
     }
 }
+#define TIMER_SETTINGS(TIMER_STRUCT)                        \
+    "{" _JSON_FIELD_INT(TIMER_STRUCT, initialCountdown)     \
+        _JSON_FIELD_INT(TIMER_STRUCT, workTime)             \
+            _JSON_FIELD_INT(TIMER_STRUCT, restTime)         \
+                _JSON_FIELD_INT(TIMER_STRUCT, recoveryTime) \
+                    _JSON_FIELD_INT_(TIMER_STRUCT, sets)    \
+                        _JSON_FIELD_INT_(TIMER_STRUCT, cycles) "}"
 // Function to start the timer
 bool startTimer(TimerSettings t_timer)
 {   
-    if(tabata.timerRunning || tabata.timerPaused){
+    Serial.println(TIMER_SETTINGS(t_timer));
+    
+    if (tabata.timerRunning || tabata.timerPaused)
+    {
         pauseTimer();
         return 0;
     }
@@ -70,18 +80,17 @@ bool startTimer(TimerSettings t_timer)
 void startTimer(uint8_t t_preset = 0)
 {
     if (t_preset != 0)
-    {
         tabata.preset = t_preset;
-    }
+    else
+        tabata.preset = timerEeprom.preset;
+
     startTimer(timerEeprom.timers[tabata.preset]);
 }
-
-
 
 // Function to stop the timer
 void stopTimer()
 {
-    SET_STATE(COMPLETED, 0);
+    SET_STATE(DONE, 0);
     resetTimer();
     tabata.timerRunning = false;
     Serial.println("Tabata Timer Stopped");
@@ -89,7 +98,7 @@ void stopTimer()
 
 void sequenceStop()
 {
-    tabata.sequenceCounter = false;
+    tabata.sequenceCounter = 0;
     tabata.timerSequence = false;
     stopTimer();
 }
@@ -97,7 +106,8 @@ void sequenceNext()
 {
     uint8_t presetIndex = tabata.sequence[tabata.sequenceCounter];
     if ((presetIndex < MAX_PRESETS) && presetIndex && tabata.sequenceCounter < ARR_SIZE(tabata.sequence))
-    {
+    {   
+        stopTimer();
         startTimer(presetIndex);
         tabata.sequenceCounter++;
     }
@@ -116,22 +126,27 @@ void sequenceStart()
         tabata.timerSequence = true;
         tabata.sequenceCounter = 0;
 
+        CLEAR_ARR(tabata.sequence);
         LOAD_ARR(tabata.sequence, timerEeprom.warmUpSequence);
         LOAD_ARR(tabata.sequence, timerEeprom.basicSequence);
         LOAD_ARR(tabata.sequence, timerEeprom.regularSequence);
+        
+        PRINT_ARR(tabata.sequence);
 
         sequenceNext();
     }
-    else{
+    else
+    {
         pauseTimer();
     }
 }
 
 void sequenceLoop()
 {
-    if (tabata.timerSequence && tabata.Phase == COMPLETED)
+    if (tabata.timerSequence && tabata.Phase == DONE && !tabata.timerRunning)
     {
         sequenceNext();
+        Serial.println("SEQUENCE NEXT");
     }
 }
 
@@ -147,17 +162,17 @@ void updateTimerState()
         switch (tabata.Phase)
         {
         case COUNTDOWN:
-            SET_STATE(WORK, tabata.timer.workTime);
+            SET_STATE(BEGIN, tabata.timer.workTime);
             break;
 
-        case WORK:
+        case BEGIN:
             SET_STATE(REST, tabata.timer.restTime);
             break;
         case REST:
             tabata.set++;
             if (tabata.set <= tabata.timer.sets)
             {
-                SET_STATE(WORK, tabata.timer.workTime);
+                SET_STATE(BEGIN, tabata.timer.workTime);
             }
             else
             {
@@ -170,18 +185,17 @@ void updateTimerState()
             tabata.cycle++;
             if (tabata.cycle <= tabata.timer.cycles)
             {
-                SET_STATE(WORK, tabata.timer.workTime);
+                SET_STATE(BEGIN, tabata.timer.workTime);
             }
             else
             {
-                SET_STATE(COMPLETED, 0);
+                SET_STATE(DONE, 0);
             }
             break;
 
-        case COMPLETED:
+        case DONE:
             if (tabata.timerRunning)
                 stopTimer();
-            tabata.timerRunning = false;
             break;
         }
 }

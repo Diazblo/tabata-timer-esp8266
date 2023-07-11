@@ -28,10 +28,10 @@ TimerSettings timer;
 // Timer Phases enum
 enum TimerPhase {
     COUNTDOWN,
-    WORK,
+    BEGIN,
     REST,
     RECOVERY,
-    COMPLETED
+    DONE
 };
 
 struct TimerCurrent
@@ -61,7 +61,7 @@ TimerCurrent tabata;
 struct TimerEeprom
 {
     TimerSettings timers[MAX_PRESETS];
-    uint8_t currentIndex;
+    uint8_t preset;
     uint8_t warmUpSequence[MAX_PRESETS];
     uint8_t basicSequence[MAX_PRESETS];
     uint8_t regularSequence[MAX_PRESETS];
