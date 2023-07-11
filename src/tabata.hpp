@@ -109,7 +109,7 @@ void sequenceNext()
 
 void sequenceStart()
 {
-    if (!tabata.timerRunning)
+    if (!tabata.timerRunning || !tabata.timerPaused)
     {
         Serial.println("SEQUENCE");
 
@@ -121,6 +121,9 @@ void sequenceStart()
         LOAD_ARR(tabata.sequence, timerEeprom.regularSequence);
 
         sequenceNext();
+    }
+    else{
+        pauseTimer();
     }
 }
 

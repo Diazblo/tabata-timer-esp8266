@@ -2,6 +2,20 @@
 #include "tabata.h"
 #include "preprocessor_helper.h"
 #include "interactor.h"
+#include "display.h"
+
+int16_t variable = 0;
+int16_t variable_pos = 0;
+bool variable_flag = 1;
+
+
+enum MenuState
+{
+    HOME,
+    SETANDSTART
+} menuState;
+
+InteractorAction interactorAction;
 
 #define TIMER_VALUES()                            \
     "{" JSON_FIELD_STRING("P", tabata.phase)      \
@@ -10,41 +24,70 @@
                 JSON_FIELD_INT("C", tabata.cycle) \
                     JSON_FIELD_INT_("I", tabata.preset) "}"
 
-int16_t variable = 0;
-int16_t variable_pos = 0;
-bool variable_flag = 1;
 
 void setup()
 {
     Serial.begin(115200);
     tabata_init();
+    display_init();
+    interactor_init();
 }
 void loop()
-{
-    INTERVAL_TIMER(200)
+{   
+    INTERVAL_TIMER(50){
+        interactor_loop();
+    }
+    INTERVAL_TIMER(100)
     {
+        interactorAction = interactor_get();
         serialLoop();
-        interactorLoop();
+        interactorMenu();
     }
     tabata_loop();
 }
 
-void interactorLoop()
+byte phaseColor(TimerPhase t_phase){
+    switch (t_phase)
+    {
+        case COUNTDOWN:
+            return BAR_WHITE;
+            break;
+        case WORK:
+            return BAR_GREEN;
+            break;
+        case REST:
+            return BAR_YELLOW;
+            break;
+        case RECOVERY:
+            return BAR_RED;
+            break;   
+    }
+    return 0;
+}
+
+void display_main(TimerCurrent t_timer ){
+    display_time(t_timer.countTime-t_timer.elapsed);
+    display_bar(t_timer.countTime-t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
+}
+
+void interactorMenu()
 {
-    switch (interactorState)
+    switch (menuState)
     {
     case HOME:
         interactorOutput.buffer = TIMER_VALUES();
+        display_main(tabata);
 
         if (interactorAction == PRESS)
             sequenceStart();
         if (interactorAction == LONGPRESS)
-            interactorState = SETANDSTART;
+            menuState = SETANDSTART;
         if (interactorAction == LONGLONGPRESS)
         {
             sequenceStop();
         }
         break;
+
     case SETANDSTART:
         if (variable_flag)
         {
@@ -63,10 +106,12 @@ void interactorLoop()
         if (interactorAction == LONGPRESS)
         {
             startTimer({variable, 0, 0, 0, 0, 0});
-            interactorState = HOME;
+            menuState = HOME;
         }
 
         interactorOutput = {String(variable), variable_pos};
+        display_seconds(variable);
+        display_bar(variable_pos+1, B111, true);
         break;
     }
 
@@ -96,7 +141,7 @@ void serialLoop()
             pauseTimer();
             break;
         case 'x':
-            stopTimer();
+            sequenceStop();
             break;
         case 'n':
             sequenceNext();

@@ -24,6 +24,8 @@
         "variant": "cpp",
         "cstddef": "cpp",
         "ranges": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "*.tpp": "cpp",
+        "io_context": "cpp"
     }
 }

@@ -1,5 +1,5 @@
-#ifndef PREPROCESSOR_HELPER_H
-#define PREPROCESSOR_HELPER_H
+#ifndef __PREPROCESSOR_HELPER__H__
+#define __PREPROCESSOR_HELPER__H__
 
 #define ARR_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
@@ -99,4 +99,4 @@
     }                                                           \
     if (interval_timer_bool_##INTERVAL)
 
-#endif
+#endif  //!__PREPROCESSOR_HELPER__H__
