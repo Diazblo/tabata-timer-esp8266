@@ -1,13 +1,16 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ESP8266WiFiMulti.h>
+#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <FS.h> // Include the SPIFFS library
 
+
 #include "tabata.h"
 
-ESP8266WiFiMulti wifiMulti; // Create an instance of the ESP8266WiFiMulti class, called 'wifiMulti'
+#include "wifi_credentials.h"
+#define AP_SSID "DOJO"
+#define AP_PASS "dojodojodojo"
 
 ESP8266WebServer server(80); // Create a webserver object that listens for HTTP request on port 80
 
@@ -156,23 +159,20 @@ void handleLive()
 }
 void webserver_init()
 {
-    Serial.println("Connecting ...");
-    int i = 0;
-    while (wifiMulti.run() != WL_CONNECTED)
-    { // Wait for the Wi-Fi to connect
-        delay(1000);
-        Serial.print(++i);
-        Serial.print(' ');
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+    for (uint8_t i = 20; i >= 0; i--)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+            break;
+        else if (i==0){
+            WiFi.softAP(AP_SSID, AP_PASS);
+        }
+        delay(500);
     }
-    Serial.println('\n');
-    Serial.print("Connected to ");
-    Serial.println(WiFi.SSID()); // Tell us what network we're connected to
-    Serial.print("IP address:\t");
-    Serial.println(WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
-    if (!MDNS.begin("esp8266"))
-    { // Start the mDNS responder for esp8266.local
-        Serial.println("Error setting up MDNS responder!");
-    }
+
+    MDNS.begin("esp8266");
 
     SPIFFS.begin(); // Start the SPI Flash Files System
 
@@ -204,5 +204,4 @@ void webserver_init()
 void webserver_loop()
 {
     server.handleClient();
-    // webSocket.loop();
 }

@@ -220,7 +220,7 @@ void serialLoop()
             ASSIGN_ARR(timerEeprom.basicSequence, "4,5");
             ASSIGN_ARR(timerEeprom.regularSequence, "3");
             timerEeprom.preset = 1;
-            for (uint8_t i = 1; i < 10; i++)
+            for (uint8_t i = 0; i < 11; i++)
             {
                 if (i == 2)
                     assignEeprom({10, 10, 10, 20, 2, 2}, i);
