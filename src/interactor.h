@@ -8,7 +8,7 @@ uint8_t buzz_state = 0;
 struct InteractorOutput
 {
     String buffer;
-    uint16_t position;
+    int16_t position;
 } interactorOutput;
 
 enum InteractorAction
@@ -22,12 +22,12 @@ enum InteractorAction
     DOWN
 };
 
-void ICACHE_RAM_ATTR encoderISR() // interrupt service routines need to be in ram
+void IRAM_ATTR encoderISR() // interrupt service routines need to be in ram
 {
     encoder.readAB();
 }
 
-void ICACHE_RAM_ATTR encoderButtonISR()
+void IRAM_ATTR encoderButtonISR()
 {
     encoder.readPushButton();
 }

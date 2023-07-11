@@ -3,6 +3,7 @@
 
 #include "preprocessor_helper.h"
 #include <Arduino.h>
+#include <EEPROM.h>
 
 #define MAX_PRESETS 11
 #define MAX_SEQUENCE MAX_PRESETS * 3
@@ -16,12 +17,12 @@
 struct TimerSettings
 {
     // char name[20];
-    int16_t initialCountdown;
-    int16_t workTime;     // Work time in milliseconds
-    int16_t restTime;     // Rest time in milliseconds
-    int16_t recoveryTime; // Recovery time in milliseconds
-    int16_t sets;         // Number of sets
-    int16_t cycles;       // Number of cycles
+    int initialCountdown;
+    int workTime;     // Work time in milliseconds
+    int restTime;     // Rest time in milliseconds
+    int recoveryTime; // Recovery time in milliseconds
+    int sets;         // Number of sets
+    int cycles;       // Number of cycles
 };
 TimerSettings timer;
 
@@ -68,6 +69,25 @@ struct TimerEeprom
 };
 TimerEeprom timerEeprom;
 
+void assignEeprom(TimerSettings t_timer, uint8_t t_index){
+    timerEeprom.timers[t_index] = t_timer;
+    timerEeprom.preset = t_index;
+}
+void updateEeprom()
+{
+    EEPROM.begin(sizeof(timerEeprom));
+    EEPROM.put(0, timerEeprom);
+    EEPROM.commit();
+    EEPROM.end();
+}
+void loadEeprom()
+{
+    EEPROM.begin(sizeof(timerEeprom));
+    EEPROM.get(0, timerEeprom);
+    EEPROM.end();
+    tabata.preset = timerEeprom.preset;
+}
+
 #define TIMER_LIVE_JSON(SETTINGS_STRUCT) \
     "{" \
     _JSON_FIELD_INT(SETTINGS_STRUCT, preset)\
@@ -78,9 +98,38 @@ TimerEeprom timerEeprom;
     _JSON_FIELD_STRING_(SETTINGS_STRUCT, phase)\
     "}"
 
+#define TIMER_SETINGS_JSON(SETTINGS_STRUCT) \
+    "{" \
+    _JSON_FIELD_INT(SETTINGS_STRUCT, initialCountdown)\
+    _JSON_FIELD_INT(SETTINGS_STRUCT, workTime)\
+    _JSON_FIELD_INT(SETTINGS_STRUCT, restTime)\
+    _JSON_FIELD_INT(SETTINGS_STRUCT, recoveryTime)\
+    _JSON_FIELD_INT(SETTINGS_STRUCT, sets)\
+    _JSON_FIELD_INT_(SETTINGS_STRUCT, cycles)\
+    "}"
+
 String get_live_json(){
     String message = TIMER_LIVE_JSON(tabata);
     return message;
 }
+
+String get_timers_json(){
+    String message = "{\"EEPROM\":[";
+    for(uint8_t i=0; i<MAX_PRESETS; i++){
+        message += TIMER_SETINGS_JSON(timerEeprom.timers[i]);
+        message += ",";
+    }
+    message = message.substring(0,message.length()-1);
+    message += "]}";
+    return message;
+}
+
+
+void pauseTimer();
+void startTimer(uint8_t t_preset);
+void stopTimer();
+void sequenceStop();
+void sequenceNext();
+void sequenceStart();
 
 #endif

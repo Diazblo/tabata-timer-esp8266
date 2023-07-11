@@ -3,7 +3,7 @@
 #include "preprocessor_helper.h"
 #include "interactor.h"
 #include "display.h"
-#include <EEPROM.h>
+#include "webserver.hpp"
 
 int16_t variable = 0;
 int16_t variable_pos = 0;
@@ -47,6 +47,7 @@ void setup()
     display_init();
     interactor_init();
     loadEeprom();
+    webserver_init();
 }
 void loop()
 {
@@ -61,6 +62,17 @@ void loop()
         interactorMenu();
     }
     tabata_loop();
+    webserver_loop();
+}
+void deviceSleep()
+{
+    size_t pin_count = ARR_SIZE(board_pins_array);
+    for (uint8_t i = 0; i < pin_count; i++)
+    {
+        pinMode(board_pins_array[i], INPUT);
+    }
+    display_sleep();
+    ESP.deepSleep(0);
 }
 
 byte phaseColor(TimerPhase t_phase)
@@ -79,11 +91,14 @@ byte phaseColor(TimerPhase t_phase)
     case RECOVERY:
         return BAR_RED;
         break;
+    case DONE:
+        return BAR_BLACK;
+        break;
     }
     return 0;
 }
 
-void display_main(TimerCurrent t_timer)
+void displayMain(TimerCurrent t_timer)
 {
     if (screen.infoCounter)
     {
@@ -122,15 +137,19 @@ void interactorMenu()
     {
     case HOME:
         interactorOutput.buffer = TIMER_VALUES();
-        display_main(tabata);
+        displayMain(tabata);
 
         if (interactorAction == PRESS)
             sequenceStart();
         if (interactorAction == LONGPRESS)
             menuState = SETANDSTART;
-        if (interactorAction == LONGLONGPRESS)
+        if (interactorAction == PRESSPRESS)
         {
             sequenceStop();
+        }
+        if (interactorAction == LONGLONGPRESS)
+        {
+            deviceSleep();
         }
         break;
 
@@ -170,26 +189,6 @@ void interactorMenu()
     // return output_buffer;
 }
 
-void assignEeprom(TimerSettings t_timer, uint8_t t_index){
-    timerEeprom.timers[t_index] = t_timer;
-    timerEeprom.preset = t_index;
-
-    Serial.println(TIMER_SETTINGS(timerEeprom.timers[timerEeprom.preset]));
-}
-void updateEeprom()
-{
-    EEPROM.begin(sizeof(timerEeprom));
-    EEPROM.put(0, timerEeprom);
-    EEPROM.commit();
-    EEPROM.end();
-}
-void loadEeprom()
-{
-    EEPROM.begin(sizeof(timerEeprom));
-    EEPROM.get(0, timerEeprom);
-    EEPROM.end();
-    Serial.println(TIMER_SETTINGS(timerEeprom.timers[timerEeprom.preset]));
-}
 
 // Function to simulate parts of code through serial
 void serialLoop()
@@ -256,6 +255,9 @@ void serialLoop()
             break;
         case 't':
             displayInfoAdd("HIII",0);
+            break;
+        case 'b':
+            deviceSleep();
             break;
         }
         Serial.flush();

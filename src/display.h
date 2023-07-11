@@ -11,6 +11,7 @@ LedController<1, 1> lc;
 #define UNIT_TIME 1
 #define UNIT_CHARS 2
 
+#define BAR_BLACK B000
 #define BAR_RED B100
 #define BAR_YELLOW B110
 #define BAR_GREEN B010

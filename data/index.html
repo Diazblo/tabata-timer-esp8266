@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#3cb3b7">
+    <title>AAKHADA TIMER</title>
+    <link href='https://fonts.googleapis.com/css?family=Abel' rel='stylesheet'>
+    <style>
+        /* Loading */
+        #loadingOverlay {
+            font-family: 'Abel';
+            pointer-events: auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            /* Add the transition property */
+            transition: opacity 0.5s ease-in;
+            opacity: 1;
+            /* Set initial opacity to 1 */
+        }
+
+        #loadingOverlay.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+
+        #loadingOverlay p {
+            color: #fff;
+            font-size: 300%;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: slideIn 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-30%);
+                opacity: 5%;
+            }
+
+            10% {
+                opacity: 30%;
+                transform: translateX(10%);
+            }
+
+            30% {
+                opacity: 70%;
+                transform: translateX(0);
+            }
+
+            100% {
+                opacity: 100%;
+                transform: translateX(0);
+            }
+        }
+
+        #mainContent {
+            /* Initial state */
+            transition: opacity 0.5s ease-in;
+            opacity: 0;
+            /* Set initial opacity to 0 */
+        }
+
+        body {
+            /* Green to cyan gradient */
+            /* background: linear-gradient(to bottom right, #42e596, #3cb3b7); */
+            background: linear-gradient(to bottom right, #ff0000, #000000);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Abel';
+
+        }
+
+        .timer-display {
+            font-size: 200%;
+            align-items: center;
+            justify-content: center;
+            display: flex;
+        }
+
+        .timer-info {
+            color: white;
+            /* Set the font color to white */
+            opacity: 50%;
+
+
+        }
+
+        .timer-value {
+            color: white;
+            font-size: 400%;
+        }
+
+        .timer-state {
+            color: white;
+            opacity: 50%;
+        }
+
+        .timer-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            opacity: 50%;
+        }
+
+        .timer-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 300%;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .timer-button:hover {
+            transform: scale(1.2);
+        }
+
+        #repeat-icon:hover {
+            color: #ff4081;
+            /* Pink */
+        }
+
+        #play-icon:hover {
+            color: #00bcd4;
+            /* Cyan */
+        }
+
+        #pause-icon:hover {
+            color: #ff9800;
+            /* Orange */
+        }
+
+        #stop-icon:hover {
+            color: #8bc34a;
+            /* Green */
+        }
+
+        #settingsPanel {
+            position: fixed;
+            bottom: -100%;
+            /* Initial position, off-screen */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background-color: rgba(0, 0, 0, 0.692);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            transition: bottom 0.3s ease-in-out;
+            z-index: 9999;
+            color: #fff;
+            border-width: 4px 0px 0 0px;
+            border-color: #ccc;
+            border-style: solid;
+            padding: 20px;
+        }
+
+        #settingsPanel.open {
+            bottom: 0;
+            /* Position when panel is open */
+        }
+
+        /* CSS styles for the settings button */
+        #settingsButton {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 40px;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 9999;
+            border: 1px solid #ffffff;
+            /* Set the border width and color */
+            background: none;
+            /* Remove the background color */
+            padding: 10px 20px;
+            /* Set the padding for the button */
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            opacity: 100%;
+            color: #ccc;
+            background-color: transparent;
+            margin: 2px;
+        }
+
+        .select-dropdown {
+            width: 96%;
+            background-color: transparent;
+            padding: 7px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            /* color: #ccc; */
+        }
+
+        .select-dropdown select {
+            appearance: none;
+            outline: none;
+            border: none;
+            border-radius: 10px;
+            background-color: transparent;
+            width: 100%;
+            cursor: pointer;
+            padding-right: 25px;
+            color: #ccc;
+        }
+
+
+        button[type="submit"] {
+            display: block;
+            width: 98%;
+            padding: 10px;
+            background-color: #00bbd400;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 100%;
+            margin: 5px;
+        }
+
+        .tab {
+            display: none;
+        }
+
+        .tab.active {
+            display: block;
+        }
+
+        .tabButtons {
+            margin-left: -20px;
+            margin-right: -20px;
+            /* padding: -10x -10px -10px -10px; */
+            border-top: 2px solid #ccc;
+        }
+
+        .tabButton {
+            position: relative;
+            margin-left: 20px;
+            top: -2px;
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: transparent;
+            /* border: none; */
+            border-radius: 0px 0px 20px 20px;
+            border-width: 0px 1px 1px 1px;
+            border-color: #cccccc50;
+            border-style: solid;
+            /* border-top: 2px solid #ccc; */
+            color: #ccc;
+        }
+
+        .tabButton.active {
+            position: relative;
+            border-color: #ccc;
+            border-top: 2px solid #000;
+            border-width: 2px 2px 2px 2px;
+            top: -2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loadingOverlay">
+        <div class="loader"></div>
+        <p>AAKHADA TIMER</p>
+    </div>
+    <div id="mainContent" class="timer-controls">
+        <div class="timer-display">
+            <div class="timer-info" id="timerInfo">SET 3</div>
+        </div>
+        <div class="timer-display">
+            <div class="timer-value" id="timerValue">00:04</div>
+        </div>
+        <div class="timer-display">
+            <div class="timer-state" id="timerState">GET READY</div>
+        </div>
+        <div class="timer-buttons">
+            <button class="timer-button" id="repeat-icon">&#x21bb;</button> <!-- Repeat icon -->
+            <button class="timer-button" onclick="startTimer()" id="play-icon">&#x25b6;</button> <!-- Play icon -->
+            <!-- <button class="timer-button" onclick="pauseTimer()" id="pause-icon">&#x23f8;</button> Pause icon -->
+            <button class="timer-button" onclick="stopTimer()" id="stop-icon">&#x25a0;</button> <!-- Stop icon -->
+        </div>
+        <!-- <div id="settingsButton"></div> -->
+
+        <button id="settingsButton">Settings</button>
+        <div id="settingsPanel">
+            <div id="tabContent">
+                <div class="tab active">
+                    <form id="timerForm">
+                        <h2 class="collapsible-header" onclick="toggleSettings()">Settings</h2>
+                        <div class="collapsible-content">
+                            <div class="select-dropdown">
+                                <select id="timerName" name="timerName" required>
+                                    <option value="0">Select Timer Name</option>
+                                    <option value="1">Preset 1</option>
+                                    <option value="2">Preset 2</option>
+                                    <option value="3">Preset 3</option>
+                                    <option value="4">Preset 4</option>
+                                    <option value="5">Preset 5</option>
+                                    <option value="6">Preset 6</option>
+                                    <option value="7">Preset 7</option>
+                                    <option value="8">Preset 8</option>
+                                    <option value="9">Preset 9</option>
+                                    <option value="10">Preset 10</option>
+                                </select>
+                            </div>
+                            
+                            <label for="initialCountdown">Countdown Time (seconds):</label>
+                            <input type="number" id="initialCountdown" name="initialCountdown" required>
+
+                            <label for="workTime">Work Time (seconds):</label>
+                            <input type="number" id="workTime" name="workTime" required>
+
+                            <label for="restTime">Rest Time (seconds):</label>
+                            <input type="number" id="restTime" name="restTime" required>
+
+                            <label for="sets">Number of Sets:</label>
+                            <input type="number" id="sets" name="sets" required>
+
+                            <label for="recoveryTime">Recovery Time (seconds):</label>
+                            <input type="number" id="recoveryTime" name="recoveryTime" required>
+
+                            <label for="cycles">Number of Cycles:</label>
+                            <input type="number" id="cycles" name="cycles" required>
+
+                            <div class="form-group">
+                                <button type="submit" id="saveButton">Save Timer</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab">
+                    <h3>Tab 2 Settings</h3>
+                    <p>This is the content for Tab 2 settings.</p>
+                </div>
+            </div>
+            <div class="tabButtons" id="tabButtons">
+                <button class="tabButton active" onclick="switchTab(0)">Tab 1</button>
+                <button class="tabButton" onclick="switchTab(1)">Tab 2</button>
+            </div>
+        </div>
+        <script>
+            // JavaScript Code
+            // Timer controls---------------------------------------------------------------------
+            function startTimer() {
+                sendAjaxRequest('/timerControl?state=sequence');
+            }
+
+            function pauseTimer() {
+                sendAjaxRequest('/timerControl?state=pause');
+            }
+
+            function stopTimer() {
+                sendAjaxRequest('/timerControl?state=stop');
+            }
+
+            function sendAjaxRequest(url) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.open('GET', url, true);
+                xhttp.send();
+            }
+
+
+            // Update display---------------------------------------------------------------------
+            // Get the timer value element
+            var timerValue = document.getElementById('timerValue');
+            var timerInfo = document.getElementById('timerInfo');
+            var timerState = document.getElementById('timerState');
+
+            var timerIndex = 0;
+
+            // Function to update the timer elements with JSON data
+            function updateTimer(json) {
+                // Parse the JSON data
+                try {
+                    // var jsonData = json.trim();
+                    var data = JSON.parse(json.trim());
+
+                    // Get the timer elements
+                    var timerInfo = document.getElementById('timerInfo');
+                    var timerValue = document.getElementById('timerValue');
+                    var timerState = document.getElementById('timerState');
+                    var timerIndex = document.getElementById('timerName');
+
+                    // Update the timer elements with the data
+                    // timerIndex.textContent = data.index;
+                    timerInfo.textContent = 'SET ' + data.set;
+                    timerValue.textContent = formatTime(data.countDown);
+                    timerState.textContent = data.phase;
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            }
+
+            // Function to format the time as mm:ss
+            function formatTime(time) {
+                var minutes = Math.floor(time / 60);
+                var seconds = time % 60;
+                return ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
+            }
+
+
+            function fetchLiveJson() {
+                // Fetch the JSON data from the /live endpoint
+                fetch('/live')
+                    .then(response => response.json())
+                    .then(data => updateTimer(JSON.stringify(data)))
+                    .catch(error => console.error('Error:', error));
+            }
+            setInterval(fetchLiveJson, 1000);
+
+            // Update presets---------------------------------------------------------------------
+            // Function to update the timerForm inputs based on the selected timerName
+            function updateTimerFormInputs() {
+                // Get the selected timerName as a number
+                var timerIndex = parseInt(document.getElementById('timerName').value);
+                // Fetch the JSON data from the /save?info endpoint
+                fetch('/save?info')
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        // Find the corresponding timer object in the JSON data based on the index (timerIndex)
+                        var timer = data.EEPROM[timerIndex];
+
+                        // Update the input values with the timer values
+                        document.getElementById('initialCountdown').value = timer.initialCountdown;
+                        document.getElementById('workTime').value = timer.workTime;
+                        document.getElementById('restTime').value = timer.restTime;
+                        document.getElementById('sets').value = timer.sets;
+                        document.getElementById('recoveryTime').value = timer.recoveryTime;
+                        document.getElementById('cycles').value = timer.cycles;
+                    })
+                    .catch(function (error) {
+                        console.error('Error fetching JSON:', error);
+                    });
+            }
+
+            // Function to handle the page load
+            function handlePageLoad() {
+                // Fetch the JSON data from the /live endpoint to get the timerName value
+                fetch('/live')
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        console.log(data);
+                        var timerName = document.getElementById('timerName');
+                        // Get the timerName value from the JSON data
+                        timerName.selectedIndex = parseInt(data.preset);
+                        console.log(data.preset);
+
+                        
+                        // Update the timerForm inputs based on the timerName value
+                        updateTimerFormInputs();
+                    })
+                    .catch(function (error) {
+                        console.error('Error fetching JSON:', error);
+                    });
+            }
+
+            // Event listener for the page load
+            window.addEventListener('load', handlePageLoad);
+
+            // Event listener for the timerName change
+            document.getElementById('timerName').addEventListener('change', updateTimerFormInputs);
+
+
+
+            // Bacground animation---------------------------------------------------------------------
+            // Get the body element
+            var body = document.querySelector("body");
+            // Update the timer value every second
+            var counter = 0;
+            setInterval(function () {
+                counter++;
+                // updateTimerDisplay(counter);
+                body.style.background = "linear-gradient(" + counter * 3.14 + "deg, #42e596, #3cb3b7)";
+            }, 100); // Update every second (1000 milliseconds)
+
+            window.addEventListener('DOMContentLoaded', function () {
+                // Form Submit---------------------------------------------------------------------
+                // Get the form element
+                var form = document.getElementById('timerForm');
+
+                // Add event listener to the form submit event
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault(); // Prevent form submission
+
+                    // Get the form data
+                    var formData = new FormData(form);
+
+                    // Create an AJAX request
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/save', true); // Replace "/save" with your server endpoint
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+                    // Send the form data
+                    xhr.send(new URLSearchParams(formData));
+
+                    // Handle the AJAX response
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            // Display a success message
+                            alert('Timer settings saved successfully.');
+                        } else {
+                            // Display an error message or handle the error
+                            console.error('Error saving timer settings.');
+                        }
+
+                    };
+
+                });
+
+
+                // Boot Animaition---------------------------------------------------------------------
+                // Select the loading overlay and main content
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const mainContent = document.getElementById('mainContent');
+
+                // Show the main content after the fade-out animation completes
+                setTimeout(function () {
+                    // Add a CSS class to trigger the fade-out transition
+                    loadingOverlay.classList.add('fade-out');
+
+                    // Show the main content after the fade-out animation completes
+                    setTimeout(function () {
+                        // Hide the loading overlay
+                        loadingOverlay.style.opacity = 0;
+                        loadingOverlay.parentNode.removeChild(loadingOverlay);
+
+                        // Show the main content
+                        mainContent.style.opacity = 1;
+                    }, 500); // Adjust the duration as needed
+                }, 1000);
+            });
+
+            // Bottom Settings---------------------------------------------------------------------
+            // Variables to track the dragging behavior
+            let isDragging = false;
+            let startOffsetY = 0;
+            let currentOffsetY = 0;
+            let settingsPanel = document.getElementById('settingsPanel');
+
+            // Function to handle the button drag
+            function handleDrag(event) {
+                if (!isDragging) return;
+
+                currentOffsetY = startOffsetY - event.clientY;
+
+                if (currentOffsetY < 0) currentOffsetY = 0;
+                if (currentOffsetY > settingsPanel.offsetHeight) currentOffsetY = settingsPanel.offsetHeight;
+
+                settingsPanel.style.bottom = `${currentOffsetY}px`;
+            }
+
+            // Function to handle the start of dragging
+            function startDrag(event) {
+                isDragging = true;
+                startOffsetY = settingsPanel.offsetHeight - event.clientY;
+            }
+
+            // Function to handle the end of dragging
+            function endDrag() {
+                if (isDragging) {
+                    isDragging = false;
+
+                    // If dragged less than 30% of the panel height, close the settings panel
+                    if (currentOffsetY < settingsPanel.offsetHeight * 0.3) {
+                        settingsPanel.style.bottom = `-${settingsPanel.offsetHeight}px`;
+                    }
+                }
+            }
+
+
+            // Function to toggle the settings panel
+            function toggleSettingsPanel() {
+                event.stopPropagation();
+                if (settingsPanel.classList.contains('open')) {
+                    // Panel is currently open, so close it
+                    settingsPanel.style.bottom = `-${settingsPanel.offsetHeight}px`;
+                    settingsPanel.classList.remove('open');
+                } else {
+                    // Panel is currently closed, so open it
+                    settingsPanel.style.bottom = '0';
+                    settingsPanel.classList.add('open');
+                }
+            }
+
+            // Event listener for the settings button click
+            document.getElementById('settingsButton').addEventListener('click', toggleSettingsPanel);
+
+            // Event listeners for dragging behavior
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.getElementById('settingsButton').addEventListener('mousedown', startDrag);
+
+
+            // Event listener to close the settings panel when clicking outside of it
+            document.addEventListener('click', function (event) {
+                // if (settingsPanel.classList.contains('open')) {
+                if (!settingsPanel.contains(event.target) && !event.target.classList.contains('settings-button')) {
+                    // Clicked outside the settings panel and not on the settings button, so close the panel
+                    settingsPanel.style.bottom = `-${settingsPanel.offsetHeight}px`;
+                    settingsPanel.classList.remove('open');
+                }
+            });
+
+            // Switching tabs---------------------------------------------------------------------
+
+            function switchTab(tabIndex) {
+                // Get all tab buttons and tab content elements
+                const tabButtons = document.querySelectorAll('.tabButton');
+                const tabs = document.querySelectorAll('.tab');
+
+                // Remove the 'active' class from all tab buttons and tabs
+                tabButtons.forEach((button) => {
+                    button.classList.remove('active');
+                });
+                tabs.forEach((tab) => {
+                    tab.classList.remove('active');
+                });
+
+                // Add the 'active' class to the clicked tab button and corresponding tab
+                tabButtons[tabIndex].classList.add('active');
+                tabs[tabIndex].classList.add('active');
+            }
+
+
+        </script>
+</body>
+
+</html>

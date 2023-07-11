@@ -18,6 +18,7 @@ void setState(TimerPhase t_state, uint16_t t_total_time, String t_phase_string =
 bool timerRun()
 {
     tabata.elapsed = (millis() / 1000) - startTime;
+    tabata.countDown = tabata.countTime - tabata.elapsed;
 
     if (tabata.elapsed >= tabata.countTime)
     {
