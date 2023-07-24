@@ -246,6 +246,18 @@
             opacity: 100%;
             margin: 5px;
         }
+        .sequnceButtons{
+            display: block;
+            width: 98%;
+            padding: 10px;
+            background-color: #00bbd400;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 100%;
+            margin: 5px;
+        }
 
         .tab {
             display: none;
@@ -314,9 +326,42 @@
         <button id="settingsButton">Settings</button>
         <div id="settingsPanel">
             <div id="tabContent">
+                <!-- TAB 1 -->
                 <div class="tab active">
+                    <h2>Sequence Manager</h2>
+                    <div>
+                        <h3>Sequence</h3>
+                        <ul id="presetList"></ul>
+                        <select id="presetName" class="select-dropdown", class="collapsible-content"  name="presetName" required>
+                            <option value="1">Preset 1</option>
+                            <option value="2">Preset 2</option>
+                            <option value="3">Preset 3</option>
+                            <option value="4">Preset 4</option>
+                            <option value="5">Preset 5</option>
+                            <option value="6">Preset 6</option>
+                            <option value="7">Preset 7</option>
+                            <option value="8">Preset 8</option>
+                            <option value="9">Preset 9</option>
+                            <option value="10">Preset 10</option>
+                        </select>
+
+                        <div>
+                            <button id="addPreset" onclick="addPreset()" class="sequnceButtons">&#8681; Add sequence to &#8681;</button>
+                            <select id="sequenceType" class="select-dropdown" name="sequenceType" required>
+                                <option value="warmUpSequence">Warmup</option>
+                                <option value="basicSequence">Basic</option>
+                                <option value="regularSequence">Combo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button id="saveSequence" onclick="saveSequenceData()" class="sequnceButtons">Save Sequence</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- TAB 2 -->
+                <div class="tab">
                     <form id="timerForm">
-                        <h2 class="collapsible-header" onclick="toggleSettings()">Settings</h2>
+                        <h2>Preset Settings</h2>
                         <div class="collapsible-content">
                             <div class="select-dropdown">
                                 <select id="timerName" name="timerName" required>
@@ -358,10 +403,6 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab">
-                    <h3>Tab 2 Settings</h3>
-                    <p>This is the content for Tab 2 settings.</p>
-                </div>
             </div>
             <div class="tabButtons" id="tabButtons">
                 <button class="tabButton active" onclick="switchTab(0)">Tab 1</button>
@@ -370,6 +411,155 @@
         </div>
         <script>
             // JavaScript Code
+            // Remove zeros in array
+            function removeZeros(array) {
+                return array.filter((element) => element !== 0);
+            }
+            // Preset data stored in a JavaScript variable---------------------------------------------------------------
+            presetNames = [
+                "null",
+                "Preset 1",
+                "Preset 2",
+                "Preset 3",
+                "Preset 4",
+                "Preset 5",
+                "Preset 6",
+                "Preset 7",
+                "Preset 8",
+                "Preset 9",
+                "Preset 10",
+            ];
+            let presetData = {
+                warmUpSequence: [1, 2, 3],
+                basicSequence: [],
+                regularSequence : [],
+            };
+            
+            // Sequence tab---------------------------------------------------------------------
+            function getSequenceData() {
+                // Fetch the JSON data from the /save?info endpoint
+                fetch('/save?info')
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        // Update the values
+                        presetData["warmUpSequence"] = data.warmUpSequence
+                        presetData["basicSequence"] = data.basicSequence
+                        presetData["regularSequence"] = data.regularSequence
+                        
+                        // Removing zero elements from each array
+                        presetData.warmUpSequence = removeZeros(presetData.warmUpSequence);
+                        presetData.basicSequence = removeZeros(presetData.basicSequence);
+                        presetData.regularSequence = removeZeros(presetData.regularSequence);
+                    })
+                    .catch(function (error) {
+                        console.error('Error fetching JSON:', error);
+                    });
+            }
+            function saveSequenceData(){
+                let params = new URLSearchParams();
+                // Add the data to the URLSearchParams object
+                params.append('warmUpSequence', presetData.warmUpSequence.join(','));
+                params.append('basicSequence', presetData.basicSequence.join(','));
+                params.append('regularSequence', presetData.regularSequence.join(','));
+                let url = '/save?' + params.toString();
+
+                // Create an AJAX request
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/save', true); // Replace "/save" with your server endpoint
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+                // Send the form data
+                xhr.send(params);
+
+                // Handle the AJAX response
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        // Display a success message
+                        alert('Sequence settings saved successfully.');
+                    } else {
+                        // Display an error message or handle the error
+                        console.error('Error saving sequence settings.');
+                    }
+                };
+                getSequenceData();
+                displaySequenceData();
+            }
+
+            // Function to add a new preset
+            function addPreset() {
+                const presetName = document.getElementById('presetName');
+                if (presetName.value !== "0") {
+                    var sequenctType = document.getElementById('sequenceType').value;
+                    presetData[sequenctType].push(presetName.value);
+                    console.log(presetName.value)
+                    console.log(presetName)
+                    displaySequenceData();
+                }
+            }
+            // Function to delete a preset
+            function deleteSequence(index) {
+                var sequenctType = document.getElementById('sequenceType').value;
+                presetData[sequenctType].splice(index, 1);
+                displaySequenceData();
+            }
+            // Function to edit a preset
+            function editPreset(index) {
+                const newName = prompt('Enter the new name for the preset:', presetNames[index]);
+                if (newName !== null) {
+                    presetNames[index] = newName;
+                    displaySequenceData();
+                }
+            }
+            function clearSequence(groupName) {
+                presetData[groupName] = [];
+                displaySequenceData();
+            }
+
+            // Function to display the preset data in the UI
+            function displaySequenceData() {
+                const presetList = document.getElementById('presetList');
+                var sequenctType = document.getElementById('sequenceType').value;
+                presetList.innerHTML = '';
+                presetData[sequenctType].forEach((presetIndex, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `${presetNames[presetIndex]} <button onclick="editPreset(${presetIndex})">&#x270E;</button> <button class="preset-button" onclick="deleteSequence(${index})">&#x2716; </button> `;
+                    presetList.appendChild(listItem);
+                });
+                updatePresetNames();
+            }
+
+            function updatePresetNames() {
+                // Get the <select> element
+                const presetNameElement = document.getElementById("presetName");
+
+                while (presetNameElement.firstChild) {
+                    presetNameElement.firstChild.remove();
+                }
+
+                // Iterate over the presetNames array and create <option> elements
+                for (let i = 0; i < presetNames.length; i++) {
+                    // Create a new <option> element
+                    const optionElement = document.createElement("option");
+
+                    // Set the value attribute to the index of the presetNames array
+                    optionElement.value = i;
+
+                    // Set the text content to the corresponding preset name
+                    optionElement.textContent = presetNames[i];
+
+                    // Append the <option> element to the <select> element
+                    presetNameElement.appendChild(optionElement);
+                }
+            }
+
+            getSequenceData();
+            displaySequenceData();
+            const sequenceTypeElement = document.getElementById("sequenceType");
+            sequenceTypeElement.addEventListener("change", displaySequenceData);
+
+
             // Timer controls---------------------------------------------------------------------
             function startTimer() {
                 sendAjaxRequest('/timerControl?state=sequence');
@@ -450,7 +640,7 @@
                     })
                     .then(function (data) {
                         // Find the corresponding timer object in the JSON data based on the index (timerIndex)
-                        var timer = data.EEPROM[timerIndex];
+                        var timer = data.timers[timerIndex];
 
                         // Update the input values with the timer values
                         document.getElementById('initialCountdown').value = timer.initialCountdown;
@@ -507,8 +697,9 @@
                 body.style.background = "linear-gradient(" + counter * 3.14 + "deg, #42e596, #3cb3b7)";
             }, 100); // Update every second (1000 milliseconds)
 
+            // on window loaded--------------------------------------------------------------------------------------------
             window.addEventListener('DOMContentLoaded', function () {
-                // Form Submit---------------------------------------------------------------------
+                // Timer form dubmit--------------------------------------------------------------------------
                 // Get the form element
                 var form = document.getElementById('timerForm');
 

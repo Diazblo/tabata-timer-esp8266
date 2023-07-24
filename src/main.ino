@@ -185,7 +185,7 @@ void interactorMenu()
     if (interactorAction != NONE)
         interactorAction = NONE;
 
-    Serial.println(String(interactorOutput.position) + ":" + interactorOutput.buffer);
+    // Serial.println(String(interactorOutput.position) + ":" + interactorOutput.buffer);
     // return output_buffer;
 }
 
@@ -223,9 +223,9 @@ void serialLoop()
             for (uint8_t i = 0; i < 11; i++)
             {
                 if (i == 2)
-                    assignEeprom({10, 10, 10, 20, 2, 2}, i);
+                    assignEepromTimer({10, 10, 10, 20, 2, 2}, i);
                 else
-                    assignEeprom({4, 1, 1, 1, 1, 1}, i);
+                    assignEepromTimer({4, 1, 1, 1, 1, 1}, i);
             }
             updateEeprom();
             break;

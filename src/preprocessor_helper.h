@@ -87,6 +87,14 @@
 #define _JSON_FIELD_STRING_(SETTINGS_STRUCT, name) "\"" #name "\": \"" + SETTINGS_STRUCT.name + "\""
 #define _JSON_FIELD_INT_(SETTINGS_STRUCT, name) "\"" #name "\": " + String(SETTINGS_STRUCT.name) +
 
+#define _JSON_FIELD_ARRAY(_JSON_BUFFER, _COMMAND, _STRUCT, _VARIABLE)   \
+    _JSON_BUFFER += "\"" #_VARIABLE "\":[";                             \
+    for(uint8_t i=0; i<ARR_SIZE(_STRUCT._VARIABLE);i++){                \
+        _JSON_BUFFER += _COMMAND(_STRUCT._VARIABLE[i]) + ",";           \
+        }                                                               \
+    _JSON_BUFFER.remove(_JSON_BUFFER.length()-1);                       \
+    _JSON_BUFFER += "],";                                               \
+
 #define ST_VAR(SETTINGS_STRUCT, VAR) #VAR, SETTINGS_STRUCT.VAR
 
 #define INTERVAL_TIMER(INTERVAL)                                \

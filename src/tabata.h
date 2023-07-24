@@ -69,7 +69,13 @@ struct TimerEeprom
 };
 TimerEeprom timerEeprom;
 
-void assignEeprom(TimerSettings t_timer, uint8_t t_index){
+void assignEepromSequence(String warmUpSequence, String basicSequence, String regularSequence){
+    ASSIGN_ARR(timerEeprom.warmUpSequence, warmUpSequence);
+    ASSIGN_ARR(timerEeprom.basicSequence, basicSequence);
+    ASSIGN_ARR(timerEeprom.regularSequence, regularSequence);
+}
+
+void assignEepromTimer(TimerSettings t_timer, uint8_t t_index){
     timerEeprom.timers[t_index] = t_timer;
     timerEeprom.preset = t_index;
 }
@@ -113,14 +119,17 @@ String get_live_json(){
     return message;
 }
 
-String get_timers_json(){
-    String message = "{\"EEPROM\":[";
-    for(uint8_t i=0; i<MAX_PRESETS; i++){
-        message += TIMER_SETINGS_JSON(timerEeprom.timers[i]);
-        message += ",";
-    }
-    message = message.substring(0,message.length()-1);
-    message += "]}";
+String get_eeprom_json(){
+    String message = "{";
+
+    _JSON_FIELD_ARRAY(message, TIMER_SETINGS_JSON, timerEeprom, timers);
+
+    _JSON_FIELD_ARRAY(message, String, timerEeprom, warmUpSequence);
+    _JSON_FIELD_ARRAY(message, String, timerEeprom, basicSequence);
+    _JSON_FIELD_ARRAY(message, String, timerEeprom, regularSequence);
+
+    message.remove(message.length()-1);
+    message += "}";
     return message;
 }
 

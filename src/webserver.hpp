@@ -135,19 +135,32 @@ void handleSave()
     String response = "";
     if (server.hasArg("info"))
     {
-        response = get_timers_json();
+        response = get_eeprom_json();
     }
     else
     {
-        assignEeprom(
-            {server.arg("initialCountdown").toInt(),
-             server.arg("workTime").toInt(),
-             server.arg("restTime").toInt(),
-             server.arg("recoveryTime").toInt(),
-             server.arg("sets").toInt(),
-             server.arg("cycles").toInt()},
-            server.arg("timerName").toInt());
+        if(server.hasArg("warmUpSequence") && server.hasArg("basicSequence") && server.hasArg("regularSequence")){
+            assignEepromSequence(
+                server.arg("warmUpSequence"), 
+                server.arg("basicSequence"), 
+                server.arg("regularSequence")
+                );
+        }
+
+        if(server.hasArg("initialCountdown")){
+            assignEepromTimer(
+                {server.arg("initialCountdown").toInt(),
+                server.arg("workTime").toInt(),
+                server.arg("restTime").toInt(),
+                server.arg("recoveryTime").toInt(),
+                server.arg("sets").toInt(),
+                server.arg("cycles").toInt()},
+                server.arg("timerName").toInt());
+        }
+        
         updateEeprom();
+        response = get_eeprom_json();
+        Serial.println(response);
     }
 
     server.send(200, "application/json", response);
