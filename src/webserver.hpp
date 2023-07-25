@@ -4,6 +4,7 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <FS.h> // Include the SPIFFS library
+#include "display.h"
 
 
 #include "tabata.h"
@@ -39,6 +40,8 @@ String getContentType(String filename)
         return "image/x-icon";
     else if (filename.endsWith(".gz"))
         return "application/x-gzip";
+    else if (filename.endsWith(".svg"))
+        return "image/svg+xml";
     return "text/plain";
 }
 
@@ -182,6 +185,7 @@ void webserver_init()
         else if (i==0){
             WiFi.softAP(AP_SSID, AP_PASS);
         }
+        display_loading();
         delay(500);
     }
 

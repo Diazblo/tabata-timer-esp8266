@@ -62,12 +62,7 @@ void pauseTimer()
 bool startTimer(TimerSettings t_timer)
 {   
     Serial.println(TIMER_SETTINGS(t_timer));
-    
-    if (tabata.timerRunning || tabata.timerPaused)
-    {
-        pauseTimer();
-        return 0;
-    }
+
     resetTimer(1);
 
     tabata.timer = t_timer;
@@ -88,12 +83,40 @@ void startTimer(uint8_t t_preset = 0)
     startTimer(timerEeprom.timers[tabata.preset]);
 }
 
+int playTimer(int8_t t_index=0){
+    if (t_index == -2)
+    {
+        sequenceStop();
+    }
+    else if (tabata.timerRunning || tabata.timerPaused)
+    {
+        pauseTimer();
+    }
+    else if (t_index == -1)
+    {
+        sequenceStart();
+    }
+    else if (t_index == 0)
+    {
+        tabata.preset = timerEeprom.preset;
+        startTimer(timerEeprom.timers[tabata.preset]);
+    }
+    else
+    {
+        tabata.preset = t_index;
+        startTimer(timerEeprom.timers[tabata.preset]);
+
+    }
+    return tabata.timerRunning | (tabata.timerPaused<<1);
+}
+
 // Function to stop the timer
 void stopTimer()
 {
     SET_STATE(DONE, 0);
     resetTimer();
     tabata.timerRunning = false;
+    tabata.timerPaused = false;
     Serial.println("Tabata Timer Stopped");
 }
 
@@ -120,26 +143,19 @@ void sequenceNext()
 
 void sequenceStart()
 {
-    if (!tabata.timerRunning || !tabata.timerPaused)
-    {
-        Serial.println("SEQUENCE");
+    Serial.println("SEQUENCE");
 
-        tabata.timerSequence = true;
-        tabata.sequenceCounter = 0;
+    tabata.timerSequence = true;
+    tabata.sequenceCounter = 0;
 
-        CLEAR_ARR(tabata.sequence);
-        LOAD_ARR(tabata.sequence, timerEeprom.warmUpSequence);
-        LOAD_ARR(tabata.sequence, timerEeprom.basicSequence);
-        LOAD_ARR(tabata.sequence, timerEeprom.regularSequence);
-        
-        PRINT_ARR(tabata.sequence);
+    CLEAR_ARR(tabata.sequence);
+    LOAD_ARR(tabata.sequence, timerEeprom.warmUpSequence);
+    LOAD_ARR(tabata.sequence, timerEeprom.basicSequence);
+    LOAD_ARR(tabata.sequence, timerEeprom.regularSequence);
+    
+    PRINT_ARR(tabata.sequence);
 
-        sequenceNext();
-    }
-    else
-    {
-        pauseTimer();
-    }
+    sequenceNext();
 }
 
 void sequenceLoop()

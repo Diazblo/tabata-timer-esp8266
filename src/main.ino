@@ -7,7 +7,7 @@
 
 int16_t variable = 0;
 int16_t variable_pos = 0;
-bool variable_flag = 1;
+bool variable_flag = 0;
 
 enum MenuState
 {
@@ -55,7 +55,7 @@ void loop()
     {
         interactor_loop();
     }
-    INTERVAL_TIMER(100)
+    INTERVAL_TIMER(150)
     {
         interactorAction = interactor_get();
         serialLoop();
@@ -83,13 +83,13 @@ byte phaseColor(TimerPhase t_phase)
         return BAR_WHITE;
         break;
     case BEGIN:
-        return BAR_GREEN;
+        return BAR_RED;
         break;
     case REST:
-        return BAR_YELLOW;
+        return BAR_GREEN;
         break;
     case RECOVERY:
-        return BAR_RED;
+        return BAR_BLACK;
         break;
     case DONE:
         return BAR_BLACK;
@@ -110,11 +110,22 @@ void displayMain(TimerCurrent t_timer)
         }
     }
     else
-    {
-        display_time(t_timer.countTime - t_timer.elapsed);
-        display_bar(t_timer.countTime - t_timer.elapsed, phaseColor(t_timer.Phase), true, t_timer.countTime);
-        displayInfoAdd(tabata.phase,0);
-        displayInfoAdd("Pre" + String(tabata.preset),1);
+    {   
+        uint16_t timer_remaining = t_timer.countTime - t_timer.elapsed;
+        display_bar(timer_remaining, phaseColor(t_timer.Phase), true, t_timer.countTime);
+        displayInfoAdd(tabata.phase,2);
+
+        if(t_timer.timerRunning){
+            // Timer Running
+            display_time(timer_remaining, (timer_remaining<5) ? true:false);
+            displayInfoAdd("Pre" + String(tabata.preset),1);  
+        }else if(!t_timer.timerPaused){
+            // Timer Idle
+            display_text("  -  ");
+        }else if(t_timer.timerPaused){
+            // Timer Paused
+            displayInfoAdd("PAUSED",1);
+        }
     }
 }
 
@@ -139,13 +150,14 @@ void interactorMenu()
         interactorOutput.buffer = TIMER_VALUES();
         displayMain(tabata);
 
-        if (interactorAction == PRESS)
-            sequenceStart();
+        if (interactorAction == PRESS){
+            playTimer(-1);
+        }
         if (interactorAction == LONGPRESS)
             menuState = SETANDSTART;
         if (interactorAction == PRESSPRESS)
         {
-            sequenceStop();
+            playTimer(-2);
         }
         if (interactorAction == LONGLONGPRESS)
         {
@@ -154,31 +166,24 @@ void interactorMenu()
         break;
 
     case SETANDSTART:
-        if (variable_flag)
-        {
-            variable += pow(10, variable_pos) * processPos(interactorAction);
-        }
-        else
-        {
-            variable_pos += processPos(interactorAction);
-            if (variable_pos < 0)
-                variable_pos = 0;
-        }
+        variable += (variable_flag ? 60:1) * processPos(interactorAction);
+        if(variable < 0) variable = 0;
 
-        if (interactorAction == PRESS)
+        if (interactorAction == PRESS){
             variable_flag = !variable_flag;
+        }
 
         if (interactorAction == LONGPRESS)
         {
             sequenceStop();
             stopTimer();
-            startTimer({variable, 0, 0, 0, 0, 0});
+            startTimer({10, variable, 0, 0, 0, 0});
             menuState = HOME;
         }
 
         interactorOutput = {String(variable), variable_pos};
-        display_seconds(variable);
-        display_bar(variable_pos + 1, B111, true);
+        display_time(variable,variable_flag+2);
+        display_bar((variable_flag ? 6:2), B100, true);
         break;
     }
 
@@ -259,6 +264,12 @@ void serialLoop()
         case 'b':
             deviceSleep();
             break;
+        case 'U':
+            playTimer();
+        break;
+        case 'u':
+            playTimer(-1);
+        break;
         }
         Serial.flush();
     }

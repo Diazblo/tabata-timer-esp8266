@@ -25,6 +25,20 @@ LedController<1, 1> lc;
 #define HEX_BLUE(HEX_VAL) ((HEX_VAL)&0xFF)
 #define HEX_THRESH 127
 
+uint8_t loading_counter = 0;
+byte loading_anim[] = {
+    B00000001,
+    B00000100,
+    B00001000,
+    B00010000,
+};
+void display_loading()
+{
+    lc.setRow(0, 3, loading_anim[loading_counter]);
+    loading_counter++;
+    if(loading_counter == 4)loading_counter=0;
+}
+
 void display_bar_clear()
 {
     lc.setRow(0, 7, 0);
@@ -62,7 +76,6 @@ void display_bar(uint16_t t_progress, byte t_color, bool t_progress_reverse = fa
     uint8_t m_led_register = (B11111111 << (8 - m_progress));
     if (t_progress_reverse)
         m_led_register = (B11111111 >> (8 - m_progress));
-    ;
 
     display_bar_set(m_led_register, t_color, true);
 }
@@ -92,19 +105,37 @@ void display_text(String t_text, bool t_dp = 0)
     }
 }
 
-void display_time(int t_input, bool t_blink = false)
+bool display_blink=0;
+void display_time(int t_input, uint8_t t_blink = false)
 {
     uint8_t m_seconds = t_input % 60;
     uint8_t m_minutes = t_input % (60 * 60) / 60;
     uint8_t m_hours = t_input / 3600;
 
-    lc.setDigit(0, 0, (m_hours % 10), false);
+    lc.setDigit(0, 0, (m_hours % 10), true);
 
     lc.setDigit(0, 1, (m_minutes % 100) / 10, false);
-    lc.setDigit(0, 2, (m_minutes % 10 / 1), false);
+    lc.setDigit(0, 2, (m_minutes % 10 / 1), true);
 
     lc.setDigit(0, 3, (m_seconds % 100) / 10, false);
     lc.setDigit(0, 4, (m_seconds % 10 / 1), false);
+
+    if(t_blink){
+        display_blink = !display_blink;
+        if(display_blink){
+            if(t_blink == 1){
+                display_clear();
+            }
+            if(t_blink == 2){
+                lc.setChar(0, 3, '_', false);
+                lc.setChar(0, 4, '_', false);
+            }
+            if(t_blink == 3){
+                lc.setChar(0, 1, '_', false);
+                lc.setChar(0, 2, '_', false);
+            }
+        }
+    }
 }
 void display_seconds(int32_t t_input)
 {   

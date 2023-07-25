@@ -4,6 +4,8 @@
 
 RotaryEncoder encoder(ENC_SCL_PIN, ENC_SDA_PIN, ENC_BTN_PIN);
 uint8_t buzz_state = 0;
+uint8_t press_counter = 0;
+unsigned long press_counter_millis = 0;
 
 struct InteractorOutput
 {
@@ -16,6 +18,7 @@ enum InteractorAction
     NONE,
     PRESS,
     PRESSPRESS,
+    PRESSPRESSPRESS,
     LONGPRESS,
     LONGLONGPRESS,
     UP,
@@ -68,7 +71,7 @@ uint16_t encoder_push_loop()
     }
     if (digitalRead(ENC_BTN_PIN) && push_button_new)
     {
-        push_button_time = (millis() - push_button_millis) / 10;
+        push_button_time = (millis() - push_button_millis);
         push_button_new = false;
         return push_button_time;
     }
@@ -96,16 +99,18 @@ void interactor_loop()
     beep_loop();
 }
 
+
+
 InteractorAction interactor_get()
 {
     uint16_t push_time = encoder_push_loop();
-    if (push_time > 200)
+    if (push_time > 2000)
     {
         beep(3);
         Serial.println("LONGLONGPRESS");
         return LONGLONGPRESS;
     }
-    else if (push_time > 70)
+    else if (push_time > 700)
     {
         beep(2);
         Serial.println("LONGPRESS");
@@ -114,8 +119,22 @@ InteractorAction interactor_get()
     else if (push_time > 0)
     {
         beep(1);
+        press_counter++;
+        press_counter_millis = millis();
         Serial.println("PRESS");
-        return PRESS;
+        return NONE;
+    }
+    if(press_counter>0 && (millis()-press_counter_millis>300)){
+        press_counter_millis = millis();
+        Serial.println(press_counter);
+        beep(press_counter);
+
+        InteractorAction returnAction = PRESS;
+        if(press_counter>2)returnAction = PRESSPRESSPRESS;
+        else if(press_counter>1)returnAction = PRESSPRESS;
+
+        press_counter=0;
+        return returnAction;
     }
 
     int16_t position = encoder.getPosition();
