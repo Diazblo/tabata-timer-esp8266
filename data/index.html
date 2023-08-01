@@ -7,8 +7,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#3cb3b7">
     <title>AAKHADA TIMER</title>
-    <link href='https://fonts.googleapis.com/css?family=Abel' rel='stylesheet'>
     <style>
+        /* latin */
+        @font-face {
+        font-family: 'Abel';
+        font-style: normal;
+        font-weight: 400;
+        src: url(MwQ5bhbm2POE2V9BPQ.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
         /* Loading */
         #loadingOverlay {
             font-family: 'Abel';
@@ -178,6 +185,14 @@
         }
 
         /* CSS styles for the settings button */
+        #startPresetButton {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 40px;
+        }
         #settingsButton {
             position: fixed;
             bottom: 20px;
@@ -185,6 +200,8 @@
             transform: translateX(-50%);
             width: 200px;
             height: 40px;
+        }
+        .homebuttons {
             color: white;
             border: none;
             border-radius: 20px;
@@ -303,7 +320,7 @@
 <body>
     <div id="loadingOverlay">
         <div class="loader"></div>
-        <p>AAKHADA TIMER</p>
+        <img width="400" height="500" src="logo.svg" class="loader-image" alt="SVG Image">
     </div>
     <div id="mainContent" class="timer-controls">
         <div class="timer-display">
@@ -323,7 +340,9 @@
         </div>
         <!-- <div id="settingsButton"></div> -->
 
-        <button id="settingsButton">Settings</button>
+        <button id="startPresetButton" class="homebuttons">Start Preset</button>
+
+        <button id="settingsButton" class="homebuttons">Settings</button>
         <div id="settingsPanel">
             <div id="tabContent">
                 <!-- TAB 1 -->
