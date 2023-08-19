@@ -87,6 +87,9 @@
 #define _JSON_FIELD_STRING_(SETTINGS_STRUCT, name) "\"" #name "\": \"" + SETTINGS_STRUCT.name + "\""
 #define _JSON_FIELD_INT_(SETTINGS_STRUCT, name) "\"" #name "\": " + String(SETTINGS_STRUCT.name) +
 
+#define _JSON_FIELD_FUNCTION(FUNCTION) "\"" #FUNCTION "\": \"" + String(FUNCTION()) + "\","
+#define _JSON_FIELD_FUNCTION_(FUNCTION) "\"" #FUNCTION "\": \"" + String(FUNCTION()) + "\""
+
 #define _JSON_FIELD_ARRAY(_JSON_BUFFER, _COMMAND, _STRUCT, _VARIABLE)   \
     _JSON_BUFFER += "\"" #_VARIABLE "\":[";                             \
     for(uint8_t i=0; i<ARR_SIZE(_STRUCT._VARIABLE);i++){                \

@@ -5,13 +5,14 @@
 #include <ESP8266WebServer.h>
 #include <FS.h> // Include the SPIFFS library
 #include "display.h"
+#include "power.h"
 
 
 #include "tabata.h"
 
 #include "wifi_credentials.h"
-#define AP_SSID "DOJO"
-#define AP_PASS "dojodojodojo"
+#define AP_SSID "AakhadaTimer"
+#define AP_PASS "ConnectHabibi"
 
 ESP8266WebServer server(80); // Create a webserver object that listens for HTTP request on port 80
 
@@ -106,9 +107,13 @@ void handleTimerControl()
     String m_timer_state = server.arg("state");
     String response = "Timer state" + m_timer_state;
 
-    if (m_timer_state == "start" || m_timer_state == "run")
+    if (server.hasArg("preset") && m_timer_state == "run")
     {
         startTimer(server.arg("preset").toInt());
+    }
+    else if (m_timer_state == "start")
+    {
+        playTimer();
     }
     else if (m_timer_state == "pause")
     {
@@ -125,7 +130,7 @@ void handleTimerControl()
     }
     else if (m_timer_state == "sequence")
     {
-        sequenceStart();
+        playTimer(-1);
     }
 
     response = get_live_json();
@@ -173,21 +178,43 @@ void handleLive()
     String response = get_live_json();
     server.send(200, "application/json", response);
 }
+void handleInfo()
+{
+    String response;
+    if (server.hasArg("info"))
+    {
+        response = get_stats_json();
+    }
+    if (server.hasArg("beepToggle")){
+        beep_toggle();
+    }
+    if (server.hasArg("powerOff")){
+        deviceSleep();        
+    }
+    server.send(200, "application/json", response);
+}
+uint8_t wifi_connect_counter = 0;
+bool wifi_loop(){
+    if (WiFi.status() == WL_DISCONNECTED)
+    {
+        DBG_LOGD(wifi_connect_counter);
+        if(wifi_connect_counter == 255){
+            wifi_connect_counter = 0;
+            return false;
+        }
+        wifi_connect_counter++;
+    }
+    else if(WiFi.status() == WL_CONNECTED){
+        return true;
+    }
+    DBG_LOGV(WiFi.status());
+    return true;
+}
 void webserver_init()
 {
     WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP(AP_SSID, AP_PASS);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-
-    for (uint8_t i = 20; i >= 0; i--)
-    {
-        if (WiFi.status() == WL_CONNECTED)
-            break;
-        else if (i==0){
-            WiFi.softAP(AP_SSID, AP_PASS);
-        }
-        display_loading();
-        delay(500);
-    }
 
     MDNS.begin("esp8266");
 
@@ -213,6 +240,7 @@ void webserver_init()
     server.on("/save", handleSave);
     server.on("/live", handleLive);
     server.on("/timerControl", handleTimerControl);
+    server.on("/info", handleInfo);
 
     server.begin(); // Actually start the server
     Serial.println("HTTP server started");

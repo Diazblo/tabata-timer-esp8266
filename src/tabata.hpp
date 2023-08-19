@@ -61,7 +61,7 @@ void pauseTimer()
 // Function to start the timer
 bool startTimer(TimerSettings t_timer)
 {   
-    Serial.println(TIMER_SETTINGS(t_timer));
+    PRT_LOGD(TIMER_SETTINGS(t_timer));
 
     resetTimer(1);
 
@@ -70,7 +70,7 @@ bool startTimer(TimerSettings t_timer)
     tabata.timerRunning = true;
     SET_STATE(COUNTDOWN, tabata.timer.initialCountdown);
 
-    Serial.println("Tabata Timer Started");
+    PRT_LOGI("Tabata Timer Started");
     return 1;
 }
 void startTimer(uint8_t t_preset = 0)
@@ -83,7 +83,7 @@ void startTimer(uint8_t t_preset = 0)
     startTimer(timerEeprom.timers[tabata.preset]);
 }
 
-int playTimer(int8_t t_index=0){
+int playTimer(int8_t t_index=0, uint16_t t_time=0){
     if (t_index == -2)
     {
         sequenceStop();
@@ -95,6 +95,12 @@ int playTimer(int8_t t_index=0){
     else if (t_index == -1)
     {
         sequenceStart();
+    }
+    else if(t_time >0)
+    {
+        tabata.preset = t_index;
+        timerEeprom.timers[0] = {10,t_time,0,0,0,0};
+        startTimer(timerEeprom.timers[tabata.preset]);
     }
     else if (t_index == 0)
     {
@@ -117,7 +123,7 @@ void stopTimer()
     resetTimer();
     tabata.timerRunning = false;
     tabata.timerPaused = false;
-    Serial.println("Tabata Timer Stopped");
+    PRT_LOGI("Tabata Timer Stopped");
 }
 
 void sequenceStop()
@@ -143,7 +149,7 @@ void sequenceNext()
 
 void sequenceStart()
 {
-    Serial.println("SEQUENCE");
+    PRT_LOGD("SEQUENCE");
 
     tabata.timerSequence = true;
     tabata.sequenceCounter = 0;
@@ -163,7 +169,7 @@ void sequenceLoop()
     if (tabata.timerSequence && tabata.Phase == DONE && !tabata.timerRunning)
     {
         sequenceNext();
-        Serial.println("SEQUENCE NEXT");
+        PRT_LOGD("SEQUENCE NEXT");
     }
 }
 

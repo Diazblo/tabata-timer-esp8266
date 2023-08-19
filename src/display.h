@@ -34,7 +34,7 @@ byte loading_anim[] = {
 };
 void display_loading()
 {
-    lc.setRow(0, 3, loading_anim[loading_counter]);
+    lc.setRow(0, 2, loading_anim[loading_counter]);
     loading_counter++;
     if(loading_counter == 4)loading_counter=0;
 }
@@ -53,6 +53,24 @@ void display_clear()
     lc.setRow(0, 2, 0);
     lc.setRow(0, 3, 0);
     lc.setRow(0, 4, 0);
+}
+
+byte bootanim_chars[]={B00001000, B00000001, B01000000};
+void display_bootanim()
+{   
+    for(uint8_t k = 0; k < 5; k++) 
+    for(uint8_t j  = 0; j < 3; j++)
+    for (uint8_t i = 5; i > k; i--)
+    {
+        lc.setRow(0, i, B00000000);
+        byte output = lc.getRow(0,i-1) | bootanim_chars[j];
+        lc.setRow(0,i-1, output);
+        delay(50);
+    }
+
+    lc.setChar(0,1,'U',false);
+    lc.setChar(0,2,'A',false);
+    delay(2000);
 }
 
 void display_bar_set(byte t_led_register, byte t_color = B111, bool t_clear = false)
@@ -105,7 +123,7 @@ void display_text(String t_text, bool t_dp = 0)
     }
 }
 
-bool display_blink=0;
+uint8_t display_blink=0;
 void display_time(int t_input, uint8_t t_blink = false)
 {
     uint8_t m_seconds = t_input % 60;
@@ -121,8 +139,9 @@ void display_time(int t_input, uint8_t t_blink = false)
     lc.setDigit(0, 4, (m_seconds % 10 / 1), false);
 
     if(t_blink){
-        display_blink = !display_blink;
-        if(display_blink){
+        display_blink++;
+        if(display_blink > 4){
+            display_blink = 0;
             if(t_blink == 1){
                 display_clear();
             }
@@ -133,6 +152,9 @@ void display_time(int t_input, uint8_t t_blink = false)
             if(t_blink == 3){
                 lc.setChar(0, 1, '_', false);
                 lc.setChar(0, 2, '_', false);
+            }
+            if(t_blink == 4){
+                lc.setChar(0, 0, '_', false);
             }
         }
     }

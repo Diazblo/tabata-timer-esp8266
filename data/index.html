@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
     <meta name="theme-color" content="#3cb3b7">
     <title>AAKHADA TIMER</title>
     <style>
@@ -74,6 +76,7 @@
 
         #mainContent {
             /* Initial state */
+            font-family: 'Abel';
             transition: opacity 0.5s ease-in;
             opacity: 0;
             /* Set initial opacity to 0 */
@@ -154,22 +157,21 @@
         }
 
         #stop-icon:hover {
-            color: #8bc34a;
+            color: #c34a4a;
             /* Green */
         }
 
         #settingsPanel {
-            position: fixed;
+            position:fixed;
             bottom: -100%;
             /* Initial position, off-screen */
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
             max-width: 600px;
-            background-color: rgba(0, 0, 0, 0.692);
+            background-color: rgba(0, 0, 0, 0.9);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             border-radius: 20px 20px 0 0;
-            padding: 20px;
             transition: bottom 0.3s ease-in-out;
             z-index: 9999;
             color: #fff;
@@ -184,15 +186,67 @@
             /* Position when panel is open */
         }
 
-        /* CSS styles for the settings button */
-        #startPresetButton {
-            position: fixed;
-            bottom: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 40px;
+        /* The container <div> - needed to position the dropup content */
+            .dropup {
+                position: fixed;
+                left: 44%;
+                bottom: 70px;
+                    /* width: 200px;
+                    height: 40px; */
+            }
+            
+            #startPresetButton {
+                position: fixed;
+                bottom: 70px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+                height: 40px;
+            }
+        /* Dropup content (Hidden by Default) */
+        .dropup-content {
+            display: none;
+            position: absolute;
+            bottom: 42px;
+            background-color: #f1f1f1;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            opacity: 0; /* Start with 0 opacity */
+            transform: translateY(-10px); /* Start slightly above its position */
+            transition: opacity 0.3s ease, transform 0.3s ease; /* Add transitions */
+        }   
+
+        /* Links inside the dropup */
+        .dropup-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
         }
+
+        /* Change color of dropup links on hover */
+        .dropup-content a:hover {background-color: #ddd}
+
+        /* Show the dropup menu on hover */
+        .dropup:hover .dropup-content {
+            display: block;
+            opacity: 1; /* Fade-in the menu */
+            transform: translateY(0); /* Move it to its original position */
+        }
+
+        /* Show the dropup menu on click */
+        /* .dropup:focus .dropup-content {
+            opacity: 1;
+            height: auto;
+            overflow: visible;
+        } */
+
+        /* Change the background color of the dropup button when the dropup content is shown */
+        /* .dropup.click .startPresetButton {
+            background-color: #2980B9;
+        } */
+
         #settingsButton {
             position: fixed;
             bottom: 20px;
@@ -219,7 +273,7 @@
 
         input[type="text"],
         input[type="number"] {
-            width: 95%;
+            width: 20%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 10px;
@@ -235,7 +289,7 @@
             padding: 7px;
             border: 1px solid #ccc;
             border-radius: 10px;
-            /* color: #ccc; */
+            color: #ccc;
         }
 
         .select-dropdown select {
@@ -255,25 +309,28 @@
             display: block;
             width: 98%;
             padding: 10px;
-            background-color: #00bbd400;
+            background-color: rgb(71, 166, 255);
             color: #fff;
-            border: none;
-            border-radius: 4px;
+            border: solid;
+            border-color: #000;
+            border-radius: 100px;
             cursor: pointer;
-            opacity: 100%;
-            margin: 5px;
+            opacity: 90%;
+            margin: 10px auto;
         }
         .sequnceButtons{
             display: block;
-            width: 98%;
-            padding: 10px;
-            background-color: #00bbd400;
+            width: 50%;
+            padding: 5px;
+            background-color: rgb(71, 166, 255);
             color: #fff;
-            border: none;
-            border-radius: 4px;
+            border: solid;
+            border-radius: 100px;
+            border-color: transparent;
             cursor: pointer;
-            opacity: 100%;
-            margin: 5px;
+            opacity: 90%;
+            margin: 15px auto;
+            font-weight: bold;
         }
 
         .tab {
@@ -314,15 +371,86 @@
             border-width: 2px 2px 2px 2px;
             top: -2px;
         }
+        .notification-bar {
+            color: white;
+            font-family: 'Abel';
+            font-weight:700;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background-color: #0000006b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 26px;
+            z-index: 9999;
+        }
+        .battery-icon {
+            margin-right: 10px;
+        }
+
+        .power-off-button,
+        .beep-disable-button {
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+        }
+
+       .borderline       
+        {
+        border-style: solid;
+        /* border-width:inherit; */
+        border-color: transparent transparent transparent transparent;
+        padding: 0%;
+        margin:  auto 10%;
+        }
+
+        .tab.active .collapsible-content::-ms-scrollbar {
+        width: 5px; /* Set the width of the scrollbar */
+        background-color: transparent; /* Make the background transparent */
+    }
+
+
+        .tab.active .collapsible-content {
+        height: 500px; /* Set the desired height for the scrollable area */
+        overflow-y: auto; /* Add vertical scrollbar when content overflows */
+        scrollbar-width: thin; /* Width of the scrollbar (Firefox) */
+        /* width: 5px; Set the width of the scrollbar */
+        background-color: transparent;
+
+        }
+
+        .tab.active .collapsible-content::-webkit-scrollbar-thumb {
+        background-color: transparent; /* Make the scrollbar thumb transparent */
+    
+    }
+
+    .tab.active .collapsible-content::-webkit-scrollbar {
+        background-color: transparent; /* Make the scrollbar thumb transparent */
+    }
     </style>
 </head>
 
 <body>
     <div id="loadingOverlay">
         <div class="loader"></div>
-        <img width="400" height="500" src="logo.svg" class="loader-image" alt="SVG Image">
+        <img width="380" height="280" src="logo.svg" class="loader-image" alt="SVG Image">
     </div>
     <div id="mainContent" class="timer-controls">
+        <div class="notification-bar">
+            <button class="beep-disable-button" onclick="timerAction('beepDisable')">
+                <span class="glyphicon glyphicon-volume-off"></span>
+            </button>
+            <span class="battery-percentage" id="batteryPercentage">--</span>
+            <button class="power-off-button" onclick="timerAction('powerOff')">
+                <span class="glyphicon glyphicon-off"></span>
+            </button>
+          </div>
+          
         <div class="timer-display">
             <div class="timer-info" id="timerInfo">SET 3</div>
         </div>
@@ -333,14 +461,24 @@
             <div class="timer-state" id="timerState">GET READY</div>
         </div>
         <div class="timer-buttons">
-            <button class="timer-button" id="repeat-icon">&#x21bb;</button> <!-- Repeat icon -->
-            <button class="timer-button" onclick="startTimer()" id="play-icon">&#x25b6;</button> <!-- Play icon -->
+            <button class="timer-button" id="repeat-icon">
+                <span class="glyphicon glyphicon-repeat"></span>
+            </button> <!-- Repeat icon -->
+            <button class="timer-button" onclick="startTimer()" id="play-icon">
+                <span class="glyphicon glyphicon-play"></span>
+            </button> <!-- Play icon -->
             <!-- <button class="timer-button" onclick="pauseTimer()" id="pause-icon">&#x23f8;</button> Pause icon -->
-            <button class="timer-button" onclick="stopTimer()" id="stop-icon">&#x25a0;</button> <!-- Stop icon -->
+            <button class="timer-button" onclick="stopTimer()" id="stop-icon">
+                <span class="glyphicon glyphicon-stop"></span>
+            </button> <!-- Stop icon -->
         </div>
         <!-- <div id="settingsButton"></div> -->
 
-        <button id="startPresetButton" class="homebuttons">Start Preset</button>
+        <div class="dropup">
+            <button id="startPresetButton" class="homebuttons">Start Preset</button>
+            <div class="dropup-content" id="startPresetNames">
+            </div>
+        </div> 
 
         <button id="settingsButton" class="homebuttons">Settings</button>
         <div id="settingsPanel">
@@ -351,6 +489,7 @@
                     <div>
                         <h3>Sequence</h3>
                         <ul id="presetList"></ul>
+                        <button id="saveSequence" onclick="displaySequenceData()" class="sequnceButtons">Refresh</button>
                         <select id="presetName" class="select-dropdown", class="collapsible-content"  name="presetName" required>
                             <option value="1">Preset 1</option>
                             <option value="2">Preset 2</option>
@@ -382,7 +521,7 @@
                     <form id="timerForm">
                         <h2>Preset Settings</h2>
                         <div class="collapsible-content">
-                            <div class="select-dropdown">
+                            <div class="select-dropdown" >
                                 <select id="timerName" name="timerName" required>
                                     <option value="0">Select Timer Name</option>
                                     <option value="1">Preset 1</option>
@@ -397,24 +536,78 @@
                                     <option value="10">Preset 10</option>
                                 </select>
                             </div>
+                            <hr>
+                            <!-- Initial Countdown Time -->
+                            <!-- &#9201;; -->
+                            <div class="borderline">
+                                <label for="initialCountdownHours">	&#9898; Initial Countdown Time</label>
+                                <br>
+                                <input type="number" id="initialCountdownHours" onclick="selectText('initialCountdownHours')" name="initialCountdownHours" min="0" onclick="selectText('initialCountdownSeconds')"  step="1" required>
+                                <label for="initialCountdownHours">h</label>
+                                <input type="number" id="initialCountdownMinutes" onclick="selectText('initialCountdownMinutes')" name="initialCountdownMinutes" min="0" onclick="selectText('initialCountdownSeconds')"  step="1" required>
+                                <label for="initialCountdownMinutes">m</label>
+                                <input type="number" id="initialCountdownSeconds" onclick="selectText('initialCountdownSeconds')" name="initialCountdownSeconds" min="0" onclick="selectText('initialCountdownSeconds')"  step="1" required>
+                                <label for="initialCountdownSeconds">s</label>
+
+                            </div>
+
+                            <!-- Work Time -->
+                            <!-- &#127947; -->
+                            <div class="borderline">
+                                <label for="workTimeHours">&#128308; Work Time</label>
+                                <br>
+                                <input type="number" id="workTimeHours" name="workTimeHours" min="0" onclick="selectText('workTimeHours')"  step="1" required>
+                                <label for="initialCountdownHours">h</label>
+                                <input type="number" id="workTimeMinutes" name="workTimeMinutes" min="0" onclick="selectText('workTimeMinutes')"  step="1" required>
+                                <label for="initialCountdownMinutes">m</label>
+                                <input type="number" id="workTimeSeconds" name="workTimeSeconds" min="0" onclick="selectText('workTimeSeconds')"  step="1" required>
+                                <label for="initialCountdownSeconds">s</label>
+
+                            </div>
+
+                            <!-- Rest Time -->
+                            <!-- &#128164; -->
+
+                            <div class="borderline">
+                                <label for="restTimeHours">&#128994; Rest Time</label>
+                                <br>
+                                <input type="number" id="restTimeHours" name="restTimeHours" min="0" onclick="selectText('restTimeHours')"  step="1" required>
+                                <label for="initialCountdownHours">h</label>
+                                <input type="number" id="restTimeMinutes" name="restTimeMinutes" min="0" onclick="selectText('restTimeMinutes')"  step="1" required>
+                                <label for="initialCountdownMinutes">m</label>
+                                <input type="number" id="restTimeSeconds" name="restTimeSeconds" min="0" onclick="selectText('restTimeSeconds')"  step="1" required>
+                                <label for="initialCountdownSeconds">s</label>
+                            </div>
+
                             
-                            <label for="initialCountdown">Countdown Time (seconds):</label>
-                            <input type="number" id="initialCountdown" name="initialCountdown" required>
+                            <!-- Recovery Time -->
+                            <!-- &#128164; -->
+                            <div class="borderline">
+                                <label for="recoveryTimeHours">&#128309; Recovery Time</label>
+                                <br>
+                                <input type="number" id="recoveryTimeHours" name="recoveryTimeHours" min="0" onclick="selectText('recoveryTimeHours')"  step="1" required>
+                                <label for="initialCountdownHours">h</label>
+                                <input type="number" id="recoveryTimeMinutes" name="recoveryTimeMinutes" min="0" onclick="selectText('recoveryTimeMinutes')"  step="1" required>
+                                <label for="initialCountdownMinutes">m</label>
+                                <input type="number" id="recoveryTimeSeconds" name="recoveryTimeSeconds" min="0" onclick="selectText('recoveryTimeSeconds')"  step="1" required>
+                                <label for="initialCountdownSeconds">s</label>
+                            </div>
+                            
+                            <!-- Number of Sets -->
+                            <!-- &#128101; -->
+                            <div class="borderline">
+                                <label for="sets">Number of Sets &#9203;</label>
+                                <br>
+                                <input type="number" id="sets" name="sets" min="0" onclick="selectText('sets')"  step="1" required style="width: 95%;">
+                            </div>
 
-                            <label for="workTime">Work Time (seconds):</label>
-                            <input type="number" id="workTime" name="workTime" required>
-
-                            <label for="restTime">Rest Time (seconds):</label>
-                            <input type="number" id="restTime" name="restTime" required>
-
-                            <label for="sets">Number of Sets:</label>
-                            <input type="number" id="sets" name="sets" required>
-
-                            <label for="recoveryTime">Recovery Time (seconds):</label>
-                            <input type="number" id="recoveryTime" name="recoveryTime" required>
-
-                            <label for="cycles">Number of Cycles:</label>
-                            <input type="number" id="cycles" name="cycles" required>
+                            <!-- Number of Cycles -->
+                            <div class="borderline">
+                                <label for="cycles">Number of Cycles &#128692;</label>
+                                <br>
+                                <input type="number" id="cycles" name="cycles" min="0" onclick="selectText('cycles')"  step="1" required style="width: 95%;" >
+                                
+                            </div>
 
                             <div class="form-group">
                                 <button type="submit" id="saveButton">Save Timer</button>
@@ -424,8 +617,8 @@
                 </div>
             </div>
             <div class="tabButtons" id="tabButtons">
-                <button class="tabButton active" onclick="switchTab(0)">Tab 1</button>
-                <button class="tabButton" onclick="switchTab(1)">Tab 2</button>
+                <button class="tabButton active" onclick="switchTab(0)">Sequence</button>
+                <button class="tabButton" onclick="switchTab(1)">Preset</button>
             </div>
         </div>
         <script>
@@ -449,10 +642,75 @@
                 "Preset 10",
             ];
             let presetData = {
-                warmUpSequence: [1, 2, 3],
+                warmUpSequence: [],
                 basicSequence: [],
                 regularSequence : [],
             };
+            function toSeconds(hours, minutes, seconds){
+                return hours * 3600 + minutes * 60 + seconds;
+            }
+            function toTime(totalSeconds){
+                hours = Math.floor(totalSeconds / 3600);
+                totalSeconds %= 3600;
+                minutes = Math.floor(totalSeconds / 60);
+                seconds = totalSeconds % 60;
+                return [hours, minutes, seconds];
+            }
+
+            function selectText(textBoxId) {
+                const input = document.getElementById(textBoxId);
+                input.focus();
+                input.select();
+            }
+
+            function selectAllInputs(formId) {
+                const form = document.getElementById(formId);
+                const inputs = form.getElementsByTagName('input');
+                for (let i = inputs.length-1; i => 0; i--) {
+                    selectText(inputs[i].id);
+                }
+            }
+
+
+            function updatePresetNames(presetListId, tagname="option") {
+                // Get the <select> element
+                const presetNameElement = document.getElementById(presetListId);
+
+                while (presetNameElement.firstChild) {
+                    presetNameElement.firstChild.remove();
+                }
+                // Iterate over the presetNames array and create <option> elements
+                presetNames.forEach((presetName, index) => {
+                    // Create a new <option> element
+                    const optionElement = document.createElement(tagname);
+
+                    // Set the value attribute to the index of the presetNames array
+                    optionElement.value = index;
+
+                    // Set the text content to the corresponding preset name
+                    optionElement.textContent = presetName;
+                    optionElement.setAttribute('data-preset', index);
+
+                    // Append the <option> element to the <select> element
+                    presetNameElement.appendChild(optionElement);
+                });
+            }
+
+            // Start preset------------------------------------------------------------------------
+            updatePresetNames("startPresetNames", 'a');
+            // Add event listeners to dropup options
+            document.querySelectorAll('.dropup-content a').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Extract the selected preset value from the "data-preset" attribute
+                    const presetValue = this.getAttribute('data-preset');
+
+                    // Call the function to start the preset with the selected value
+                    console.log(presetValue);
+                    sendAjaxRequest('/timerControl?state=run&preset=' + presetValue);
+
+                });
+            });
+
             
             // Sequence tab---------------------------------------------------------------------
             function getSequenceData() {
@@ -462,6 +720,7 @@
                         return response.json();
                     })
                     .then(function (data) {
+                        console.log(data);
                         // Update the values
                         presetData["warmUpSequence"] = data.warmUpSequence
                         presetData["basicSequence"] = data.basicSequence
@@ -496,9 +755,10 @@
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         // Display a success message
-                        alert('Sequence settings saved successfully.');
+                        closeSettingsPanel();
                     } else {
                         // Display an error message or handle the error
+                        alert('Error saving sequence settings.');
                         console.error('Error saving sequence settings.');
                     }
                 };
@@ -546,37 +806,13 @@
                     listItem.innerHTML = `${presetNames[presetIndex]} <button onclick="editPreset(${presetIndex})">&#x270E;</button> <button class="preset-button" onclick="deleteSequence(${index})">&#x2716; </button> `;
                     presetList.appendChild(listItem);
                 });
-                updatePresetNames();
+                updatePresetNames("presetName");
             }
 
-            function updatePresetNames() {
-                // Get the <select> element
-                const presetNameElement = document.getElementById("presetName");
-
-                while (presetNameElement.firstChild) {
-                    presetNameElement.firstChild.remove();
-                }
-
-                // Iterate over the presetNames array and create <option> elements
-                for (let i = 0; i < presetNames.length; i++) {
-                    // Create a new <option> element
-                    const optionElement = document.createElement("option");
-
-                    // Set the value attribute to the index of the presetNames array
-                    optionElement.value = i;
-
-                    // Set the text content to the corresponding preset name
-                    optionElement.textContent = presetNames[i];
-
-                    // Append the <option> element to the <select> element
-                    presetNameElement.appendChild(optionElement);
-                }
-            }
-
-            getSequenceData();
-            displaySequenceData();
             const sequenceTypeElement = document.getElementById("sequenceType");
             sequenceTypeElement.addEventListener("change", displaySequenceData);
+            getSequenceData();
+            displaySequenceData();
 
 
             // Timer controls---------------------------------------------------------------------
@@ -629,13 +865,21 @@
                     console.error('Error parsing JSON:', error);
                 }
             }
-
-            // Function to format the time as mm:ss
             function formatTime(time) {
-                var minutes = Math.floor(time / 60);
+                var hours = Math.floor(time / 3600);
+                var minutes = Math.floor((time % 3600) / 60);
                 var seconds = time % 60;
-                return ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
-            }
+
+                var formattedTime = '';
+
+                if (hours > 0) {
+                    formattedTime += (hours) + ':';
+                }
+                
+                formattedTime += ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
+                return formattedTime;
+            }           
+
 
 
             function fetchLiveJson() {
@@ -661,13 +905,32 @@
                         // Find the corresponding timer object in the JSON data based on the index (timerIndex)
                         var timer = data.timers[timerIndex];
 
+                        let initialCountdown = toTime(timer.initialCountdown);
+                        let workTime = toTime(timer.workTime);
+                        let restTime = toTime(timer.restTime);
+                        let recoveryTime = toTime(timer.recoveryTime);
+
                         // Update the input values with the timer values
-                        document.getElementById('initialCountdown').value = timer.initialCountdown;
-                        document.getElementById('workTime').value = timer.workTime;
-                        document.getElementById('restTime').value = timer.restTime;
+                        document.getElementById('initialCountdownHours').value = initialCountdown[0];
+                        document.getElementById('initialCountdownMinutes').value = initialCountdown[1];
+                        document.getElementById('initialCountdownSeconds').value = initialCountdown[2];
+
+                        document.getElementById('workTimeHours').value = workTime[0];
+                        document.getElementById('workTimeMinutes').value = workTime[1];
+                        document.getElementById('workTimeSeconds').value = workTime[2];
+
+                        document.getElementById('restTimeHours').value = restTime[0];
+                        document.getElementById('restTimeMinutes').value = restTime[1];
+                        document.getElementById('restTimeSeconds').value = restTime[2];
+
+                        document.getElementById('recoveryTimeHours').value = recoveryTime[0];
+                        document.getElementById('recoveryTimeMinutes').value = recoveryTime[1];
+                        document.getElementById('recoveryTimeSeconds').value = recoveryTime[2];
+
                         document.getElementById('sets').value = timer.sets;
-                        document.getElementById('recoveryTime').value = timer.recoveryTime;
                         document.getElementById('cycles').value = timer.cycles;
+
+                        selectAllInputs('timerForm');
                     })
                     .catch(function (error) {
                         console.error('Error fetching JSON:', error);
@@ -713,7 +976,7 @@
             setInterval(function () {
                 counter++;
                 // updateTimerDisplay(counter);
-                body.style.background = "linear-gradient(" + counter * 3.14 + "deg, #42e596, #3cb3b7)";
+                body.style.background = "linear-gradient(" + counter * 3.14 + "deg, #ff0000, #000000)";
             }, 100); // Update every second (1000 milliseconds)
 
             // on window loaded--------------------------------------------------------------------------------------------
@@ -725,9 +988,46 @@
                 // Add event listener to the form submit event
                 form.addEventListener('submit', function (e) {
                     e.preventDefault(); // Prevent form submission
+                    // Call a function to handle the form data
+                    
+                    // Get values for Initial Countdown Time
+                    const initialCountdownHours = parseInt(document.getElementById("initialCountdownHours").value);
+                    const initialCountdownMinutes = parseInt(document.getElementById("initialCountdownMinutes").value);
+                    const initialCountdownSeconds = parseInt(document.getElementById("initialCountdownSeconds").value);
+                    // Get values for Work Time
+                    const workTimeHours = parseInt(document.getElementById("workTimeHours").value);
+                    const workTimeMinutes = parseInt(document.getElementById("workTimeMinutes").value);
+                    const workTimeSeconds = parseInt(document.getElementById("workTimeSeconds").value);
+                    // Get values for Rest Time
+                    const restTimeHours = parseInt(document.getElementById("restTimeHours").value);
+                    const restTimeMinutes = parseInt(document.getElementById("restTimeMinutes").value);
+                    const restTimeSeconds = parseInt(document.getElementById("restTimeSeconds").value);
+                    // Get values for Recovery Time
+                    const recoveryTimeHours = parseInt(document.getElementById("recoveryTimeHours").value);
+                    const recoveryTimeMinutes = parseInt(document.getElementById("recoveryTimeMinutes").value);
+                    const recoveryTimeSeconds = parseInt(document.getElementById("recoveryTimeSeconds").value);
+
+                    const timerName = document.getElementById("timerName").value;
+                    const initialCountdown = toSeconds(initialCountdownHours, initialCountdownMinutes, initialCountdownSeconds);
+                    const workTime = toSeconds(workTimeHours, workTimeMinutes, workTimeSeconds);
+                    const restTime = toSeconds(restTimeHours, restTimeMinutes, restTimeSeconds);
+                    const sets = document.getElementById("sets").value;
+                    const recoveryTime = toSeconds(recoveryTimeHours, recoveryTimeMinutes, recoveryTimeSeconds);                    
+                    const cycles = document.getElementById("cycles").value;
 
                     // Get the form data
-                    var formData = new FormData(form);
+                    // Create an object with the form data
+                    var formData = {
+                        timerName: timerName,
+                        initialCountdown: initialCountdown,
+                        workTime: workTime,
+                        restTime: restTime,
+                        sets: sets,
+                        recoveryTime: recoveryTime,
+                        cycles: cycles,
+                    };
+                    console.log(formData);
+                    // var formData = new FormData(form);
 
                     // Create an AJAX request
                     var xhr = new XMLHttpRequest();
@@ -737,13 +1037,15 @@
                     // Send the form data
                     xhr.send(new URLSearchParams(formData));
 
-                    // Handle the AJAX response
+                    // Handle the AJAX response 
                     xhr.onload = function () {
                         if (xhr.status === 200) {
                             // Display a success message
-                            alert('Timer settings saved successfully.');
+                            closeSettingsPanel();
+                            // alert('Done');
                         } else {
                             // Display an error message or handle the error
+                            alert('Error saving timer settings.');
                             console.error('Error saving timer settings.');
                         }
 
@@ -812,18 +1114,33 @@
             }
 
 
+            // Function to close the settings panel
+            function closeSettingsPanel() {
+            // Get a reference to the settings panel element
+            const settingsPanel = document.getElementById('settingsPanel');
+
+            // Close the panel if it is open
+            if (settingsPanel.classList.contains('open')) {
+                settingsPanel.style.bottom = `-${settingsPanel.offsetHeight}px`;
+                settingsPanel.classList.remove('open');
+            }
+            }
+
             // Function to toggle the settings panel
-            function toggleSettingsPanel() {
-                event.stopPropagation();
-                if (settingsPanel.classList.contains('open')) {
-                    // Panel is currently open, so close it
-                    settingsPanel.style.bottom = `-${settingsPanel.offsetHeight}px`;
-                    settingsPanel.classList.remove('open');
-                } else {
-                    // Panel is currently closed, so open it
-                    settingsPanel.style.bottom = '0';
-                    settingsPanel.classList.add('open');
-                }
+            function toggleSettingsPanel(event) {
+            // Stop the event from propagating to the parent elements
+            event.stopPropagation();
+
+            // Get a reference to the settings panel element
+            const settingsPanel = document.getElementById('settingsPanel');
+
+            // Toggle the panel state
+            if (settingsPanel.classList.contains('open')) {
+                closeSettingsPanel(); // Call the closeSettingsPanel() function
+            } else {
+                settingsPanel.style.bottom = '0';
+                settingsPanel.classList.add('open');
+            }
             }
 
             // Event listener for the settings button click
@@ -864,7 +1181,32 @@
                 tabButtons[tabIndex].classList.add('active');
                 tabs[tabIndex].classList.add('active');
             }
-
+            // Notification bar------------------------------------------
+            function updateNotificationBar(){
+                // Fetch the JSON data from the /save?info endpoint
+                fetch('/info?info')
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        console.log(data);
+                        updateBatteryPercentage(data.getBattery);
+                    })
+                    .catch(function (error) {
+                        console.error('Error fetching JSON:', error);
+                    });
+            }
+            function updateBatteryPercentage(percentage) {
+                const batteryPercentageElement = document.getElementById('batteryPercentage');
+                batteryPercentageElement.textContent = percentage + '%';
+            }
+            setInterval(updateNotificationBar, 3000);
+            
+            function timerAction(actionString) {
+                console.log('/info?' + actionString);
+                sendAjaxRequest('/info?' + actionString);
+                // if(actionString == "powerOff")window.close();
+            }
 
         </script>
 </body>

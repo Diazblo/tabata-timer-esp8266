@@ -26,6 +26,7 @@
         "ranges": "cpp",
         "cmath": "cpp",
         "*.tpp": "cpp",
-        "io_context": "cpp"
+        "io_context": "cpp",
+        "string_view": "cpp"
     }
 }

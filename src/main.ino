@@ -4,10 +4,23 @@
 #include "interactor.h"
 #include "display.h"
 #include "webserver.hpp"
+#include "power.h"
+#include "debug.h"
+
+byte colorByPhase[]     ={BAR_WHITE, BAR_RED, BAR_GREEN, BAR_BLUE, BAR_BLACK};
+String messageByPhase[] ={"COUNT", "BEGIN", "REST", "RECOVERY", "DONE"};
 
 int16_t variable = 0;
 int16_t variable_pos = 0;
 bool variable_flag = 0;
+
+bool onBootFlag = true;
+bool indicateByPhaseOnce = false;
+bool indicateByTick = false;
+bool indicateByPauseOnce = true;
+
+TimerPhase lastPhase;
+uint16_t lastElapsed;
 
 enum MenuState
 {
@@ -43,11 +56,15 @@ InteractorAction interactorAction;
 void setup()
 {
     Serial.begin(115200);
-    tabata_init();
     display_init();
+    checkBattery();
+    display_text("  -  ");
+    tabata_init();
     interactor_init();
     loadEeprom();
     webserver_init();
+    DBG_LOGI(get_stats_json());
+    boot_intro();
 }
 void loop()
 {
@@ -55,76 +72,151 @@ void loop()
     {
         interactor_loop();
     }
-    INTERVAL_TIMER(150)
+    INTERVAL_TIMER(100)
     {
         interactorAction = interactor_get();
         serialLoop();
         interactorMenu();
+        // TEMPCHNG
+        // if(!wifi_loop()){
+        //     displayInfoAdd("discn",4);
+        //     beep_music("E2E2E2E0");
+        // }
     }
     tabata_loop();
     webserver_loop();
+
+    if(onBootFlag) onBootFlag = false;
 }
-void deviceSleep()
-{
-    size_t pin_count = ARR_SIZE(board_pins_array);
-    for (uint8_t i = 0; i < pin_count; i++)
-    {
-        pinMode(board_pins_array[i], INPUT);
+void checkBattery(){
+    int battery_level = getBattery();
+    if(onBootFlag && battery_level<99){
+        displayInfoAdd("bat"+String(getBattery()), 1);
     }
-    display_sleep();
-    ESP.deepSleep(0);
+    if(battery_level < 30){
+        displayInfoAdd("loBat",1);
+        DBG_LOGW("Battery Low!");
+        DBG_LOGI(battery_level);
+    }
+    if(battery_level < 10){
+        display_text("loBat");
+        DBG_LOGW("Battery Empty!");
+        delay(1000);
+        deviceSleep();
+    }
 }
 
-byte phaseColor(TimerPhase t_phase)
-{
-    switch (t_phase)
-    {
-    case COUNTDOWN:
-        return BAR_WHITE;
-        break;
-    case BEGIN:
-        return BAR_RED;
-        break;
-    case REST:
-        return BAR_GREEN;
-        break;
-    case RECOVERY:
-        return BAR_BLACK;
-        break;
-    case DONE:
-        return BAR_BLACK;
-        break;
-    }
-    return 0;
-}
-
-void displayMain(TimerCurrent t_timer)
-{
+bool displayInfo(){
     if (screen.infoCounter)
     {
         display_text(screen.messages[screen.infoCounter - 1]);
         if (millis() - screen.infoMillis > 1000)
         {
-            screen.infoCounter--;
+            if(!onBootFlag)screen.infoCounter--;
             screen.infoMillis = millis();
         }
+        return 1;
     }
-    else
+    return 0;
+}
+
+TimerPhase dummy= DONE;
+void indicateByPhase(TimerCurrent t_timer){
+    if(lastPhase != t_timer.Phase){
+        // Execute on phase change
+        indicateByPhaseOnce=true;
+        beep_wait(0);
+    }
+
+    // Flag for updating on ticks
+    if(lastElapsed != t_timer.countDown){
+        lastElapsed = t_timer.countDown;
+        indicateByTick = true;
+    }else{
+        indicateByTick = false;
+    }
+
+    // Update by phase
+    switch (t_timer.Phase)
+    {
+    case COUNTDOWN:
+        if(indicateByPhaseOnce){
+            beep_music("C1");
+        }
+        break;
+    case BEGIN:
+        if(indicateByPhaseOnce){
+            beep_music("C2D2E2F5");
+        }
+        break;
+    case REST:
+        if(indicateByPhaseOnce){
+            beep_music("E2D2E2D2");
+        }
+        break;
+    case RECOVERY:
+        if(indicateByPhaseOnce){
+            beep_music("F2D2E2C5");
+        }
+        break;
+    case DONE:
+        if(indicateByPhaseOnce){
+            beep_music("C2C2C5");
+        }
+        break;
+    }
+    // Update everytime for all phase
+    uint8_t indexByPhase = static_cast<int>(t_timer.Phase);
+    display_bar(t_timer.countDown, colorByPhase[indexByPhase], true, t_timer.countTime);
+    
+    if(t_timer.countDown < 8 && indicateByTick){
+        beep(1, 3654);
+        if(t_timer.countDown < 4)  beep(1,3255);
+        if(t_timer.countDown == 1)  beep(5, 3255);
+    }
+    // Update once for all phase
+    if(indicateByPhaseOnce)
+    {
+        // beep(beepByPhase[indexByPhase]);
+        displayInfoAdd(messageByPhase[indexByPhase],2);
+        DBG_LOGI(messageByPhase[indexByPhase]);
+    }
+    if(indicateByPhaseOnce)
+    {
+        indicateByPhaseOnce=false;
+        lastPhase = t_timer.Phase;
+    }
+}
+
+void displayMain(TimerCurrent t_timer)
+{
+    if(!displayInfo())
     {   
-        uint16_t timer_remaining = t_timer.countTime - t_timer.elapsed;
-        display_bar(timer_remaining, phaseColor(t_timer.Phase), true, t_timer.countTime);
-        displayInfoAdd(tabata.phase,2);
+        uint8_t indexByPhase = static_cast<int>(t_timer.Phase);
+        
+        // Update  by phase
+        indicateByPhase(t_timer);      
 
         if(t_timer.timerRunning){
             // Timer Running
-            display_time(timer_remaining, (timer_remaining<5) ? true:false);
-            displayInfoAdd("Pre" + String(tabata.preset),1);  
+            if(!indicateByPauseOnce){
+                indicateByPauseOnce = true;
+                beep_music("E1G1");
+            }
+            display_time(t_timer.countDown, (t_timer.countDown<6) ? true:false);
+            if(tabata.preset)
+                displayInfoAdd("Pre" + String(tabata.preset),1);  
         }else if(!t_timer.timerPaused){
             // Timer Idle
+            // displayInfoAdd("  -  ", 2);
             display_text("  -  ");
-        }else if(t_timer.timerPaused){
+            checkBattery();
+
+        }else if(t_timer.timerPaused && indicateByPauseOnce){
             // Timer Paused
+            indicateByPauseOnce = false;
             displayInfoAdd("PAUSED",1);
+            beep_music("E1E1");
         }
     }
 }
@@ -133,7 +225,8 @@ void displayInfoAdd(String t_message, uint8_t t_index)
 {
     if (!(t_message == screen.lastMessage[t_index]))
     {
-        beep(1);
+        DBG_LOGV(t_message);
+        // beep(1);
         screen.lastMessage[t_index] = t_message;
         screen.messages[screen.infoCounter++] = t_message;
         screen.infoMillis = millis();
@@ -166,23 +259,39 @@ void interactorMenu()
         break;
 
     case SETANDSTART:
-        variable += (variable_flag ? 60:1) * processPos(interactorAction);
+        int16_t variable_multiplier[]={1,60,3600};
+        variable += variable_multiplier[variable_pos] * processPos();
         if(variable < 0) variable = 0;
 
         if (interactorAction == PRESS){
-            variable_flag = !variable_flag;
+            variable_pos++;
         }
 
-        if (interactorAction == LONGPRESS)
+        if (interactorAction == LONGPRESS || variable_pos==3)
         {
-            sequenceStop();
-            stopTimer();
-            startTimer({10, variable, 0, 0, 0, 0});
+            if(variable > 0){
+                sequenceStop();
+                playTimer(0, variable);
+                displayInfoAdd("START",0);
+                menuState = HOME;
+            }
+            else
+            {
+                displayInfoAdd("Error",0);
+            }
+            variable_pos=0;
+        }
+        if (interactorAction == PRESSPRESS)
+        {
+            displayInfoAdd("EXIT",0);
             menuState = HOME;
         }
 
+        displayInfoAdd("TIMER",0);
         interactorOutput = {String(variable), variable_pos};
-        display_time(variable,variable_flag+2);
+
+        if(!displayInfo())
+            display_time(variable,(interactorAction==NONE)?(variable_pos+2):0);
         display_bar((variable_flag ? 6:2), B100, true);
         break;
     }
@@ -190,12 +299,24 @@ void interactorMenu()
     if (interactorAction != NONE)
         interactorAction = NONE;
 
-    // Serial.println(String(interactorOutput.position) + ":" + interactorOutput.buffer);
+    DBG_LOGV(interactorOutput.position);
+    DBG_LOGV(interactorOutput.buffer);
     // return output_buffer;
 }
 
+void boot_intro(){
+    display_bootanim();
+    String message = "  URBAN AAKHADA";
+    uint8_t scroll_max = message.length();
+    for(uint8_t i=0; i<scroll_max; i++){
+        display_text(message.substring(i));
+        delay(300);
+    }
+}
 
 // Function to simulate parts of code through serial
+uint16_t beepFreq = 1200;
+float beepMult = 1;
 void serialLoop()
 {
     uint8_t incoming = Serial.read();
@@ -235,7 +356,10 @@ void serialLoop()
             updateEeprom();
             break;
         case 'q':
-            startTimer({10, 0, 0, 0, 0, 0});
+            beep_toggle();
+            break;
+        case 'Q':
+            ESP.reset();
             break;
         case 'w':
             startTimer(2);
@@ -261,7 +385,7 @@ void serialLoop()
         case 't':
             displayInfoAdd("HIII",0);
             break;
-        case 'b':
+        case 'z':
             deviceSleep();
             break;
         case 'U':
@@ -269,6 +393,35 @@ void serialLoop()
         break;
         case 'u':
             playTimer(-1);
+        break;
+        case 'V':
+            beepFreq += 10;
+            Serial.println(beepFreq);
+        break;
+        case 'v':
+            beepFreq -= 10;
+            Serial.println(beepFreq);
+        break;
+        case 'C':
+            beep_music("E1E1F1G1G1F1E1D1C1C1D1E1E1D1D1E1E1F1G1G1F1E1D1C1C1D1E1D1E1F1F1E1E1F1CE1D1C1C1D1E1E1D1D1E1E1F1G1G1F1E1D1C1C1D1E1D1E1F1F1E1E1F1E1D1C1C1D1E1D1E1");
+        break;
+        case 'c':
+            beep_music("B1A1G1A1B1B1B2A1A1A2B1B1B2B1A1G1A1B1B1B2A1A1B1A1G2G2");
+        break;
+        case 'B':
+            beep_music("E1E1E2E1E1E2E1G1C1D1E4F1F1F1F1F1E1E1E1E1D1D1E1D2G2");
+        break;
+        case 'b':
+            beep_music("C1C1G1G1A1A1G2F1F1E1E1D1D1C2");
+        break;
+        case 'g':
+            beep_music("C1C1D1C1F1E1C1C1D1C1G1F1C1C1C2A1A1G1F1E1D1B1B1A1F1E1D1C2");
+        break;
+        case ',':
+            display_bootanim();
+        break;
+        case '.':
+            boot_intro();
         break;
         }
         Serial.flush();
